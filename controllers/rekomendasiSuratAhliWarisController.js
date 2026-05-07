@@ -1,0 +1,211 @@
+const RekomendasiSuratAhliWarisModel = require('../models/rekomendasiSuratAhliWarisModel');
+const R = require('../utils/response');
+
+function normalizeDigits(value) {
+  return String(value || '').replace(/\D/g, '');
+}
+
+class RekomendasiSuratAhliWarisController {
+  // Validasi field wajib
+  static validateInput(data) {
+    const errors = [];
+
+    if (!data.nama_pewaris || data.nama_pewaris.trim() === '') {
+      errors.push('nama_pewaris tidak boleh kosong');
+    }
+
+    const nikPewaris = normalizeDigits(data.nik_pewaris);
+    if (!nikPewaris) {
+      errors.push('nik_pewaris tidak boleh kosong');
+    } else if (nikPewaris.length !== 16) {
+      errors.push('nik_pewaris harus valid (16 digit angka)');
+    }
+
+    if (!data.alamat_pewaris || data.alamat_pewaris.trim() === '') {
+      errors.push('alamat_pewaris tidak boleh kosong');
+    }
+
+    if (!data.nama_pemohon || data.nama_pemohon.trim() === '') {
+      errors.push('nama_pemohon tidak boleh kosong');
+    }
+
+    const nikPemohon = normalizeDigits(data.nik_pemohon);
+    if (!nikPemohon) {
+      errors.push('nik_pemohon tidak boleh kosong');
+    } else if (nikPemohon.length !== 16) {
+      errors.push('nik_pemohon harus valid (16 digit angka)');
+    }
+
+    if (!data.alamat_pemohon || data.alamat_pemohon.trim() === '') {
+      errors.push('alamat_pemohon tidak boleh kosong');
+    }
+
+    const noHp = normalizeDigits(data.no_hp);
+    if (!noHp) {
+      errors.push('no_hp tidak boleh kosong');
+    } else if (noHp.length < 10 || noHp.length > 15) {
+      errors.push('no_hp harus valid');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors: errors
+    };
+  }
+
+  // Buat pengajuan rekomendasi surat ahli waris baru
+  static async buatPengajuan(req, res) {
+    try {
+      const {
+        nama_pewaris,
+        nik_pewaris,
+        alamat_pewaris,
+        nama_pemohon,
+        nik_pemohon,
+        alamat_pemohon,
+        no_hp
+      } = req.body;
+
+      const validation = RekomendasiSuratAhliWarisController.validateInput(req.body);
+      if (!validation.isValid) {
+        return R.badRequest(res, 'Validasi gagal', validation.errors);
+      }
+
+      const pengajuanData = {
+        nama_pewaris: nama_pewaris.trim(),
+        nik_pewaris: normalizeDigits(nik_pewaris),
+        alamat_pewaris: alamat_pewaris.trim(),
+        nama_pemohon: nama_pemohon.trim(),
+        nik_pemohon: normalizeDigits(nik_pemohon),
+        alamat_pemohon: alamat_pemohon.trim(),
+        no_hp: normalizeDigits(no_hp)
+      };
+
+      const result = await RekomendasiSuratAhliWarisModel.savePengajuan(pengajuanData);
+
+      if (result.success) {
+        return R.created(res, 'Pengajuan rekomendasi surat ahli waris berhasil dibuat', {
+          id_pengajuan: result.id,
+          status: 'Menunggu verifikasi',
+          ...pengajuanData
+        });
+      }
+
+      return R.serverError(res, 'Gagal menyimpan pengajuan rekomendasi surat ahli waris ke database');
+    } catch (error) {
+      return R.serverError(res);
+    }
+  }
+
+  // Ambil semua pengajuan
+  static async getAllPengajuan(req, res) {
+    try {
+      const result = await RekomendasiSuratAhliWarisModel.getAllPengajuan();
+      if (result.success) {
+        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat ahli waris', result.data);
+      }
+
+      return R.serverError(res, 'Gagal mengambil data pengajuan rekomendasi surat ahli waris');
+    } catch (error) {
+      return R.serverError(res);
+    }
+  }
+
+  // Ambil pengajuan berdasarkan ID
+  static async getPengajuanById(req, res) {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return R.badRequest(res, 'ID pengajuan tidak valid');
+      }
+
+      const result = await RekomendasiSuratAhliWarisModel.getPengajuanById(id);
+      if (result.success && result.data) {
+        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat ahli waris', result.data);
+      }
+
+      if (result.success && !result.data) {
+        return R.notFound(res, 'Pengajuan rekomendasi surat ahli waris tidak ditemukan');
+      }
+
+      return R.serverError(res, 'Gagal mengambil data pengajuan rekomendasi surat ahli waris');
+    } catch (error) {
+      return R.serverError(res);
+    }
+  }
+
+  // Update pengajuan
+  static async updatePengajuan(req, res) {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return R.badRequest(res, 'ID pengajuan tidak valid');
+      }
+
+      const validation = RekomendasiSuratAhliWarisController.validateInput(req.body);
+      if (!validation.isValid) {
+        return R.badRequest(res, 'Validasi gagal', validation.errors);
+      }
+
+      const {
+        nama_pewaris,
+        nik_pewaris,
+        alamat_pewaris,
+        nama_pemohon,
+        nik_pemohon,
+        alamat_pemohon,
+        no_hp
+      } = req.body;
+
+      const pengajuanData = {
+        nama_pewaris: nama_pewaris.trim(),
+        nik_pewaris: normalizeDigits(nik_pewaris),
+        alamat_pewaris: alamat_pewaris.trim(),
+        nama_pemohon: nama_pemohon.trim(),
+        nik_pemohon: normalizeDigits(nik_pemohon),
+        alamat_pemohon: alamat_pemohon.trim(),
+        no_hp: normalizeDigits(no_hp)
+      };
+
+      const result = await RekomendasiSuratAhliWarisModel.updatePengajuan(id, pengajuanData);
+
+      if (result.success && result.affectedRows > 0) {
+        return R.ok(res, 'Pengajuan rekomendasi surat ahli waris berhasil diperbarui', null);
+      }
+
+      if (result.success && result.affectedRows === 0) {
+        return R.notFound(res, 'Pengajuan rekomendasi surat ahli waris tidak ditemukan');
+      }
+
+      return R.serverError(res, 'Gagal memperbarui pengajuan rekomendasi surat ahli waris');
+    } catch (error) {
+      return R.serverError(res);
+    }
+  }
+
+  // Hapus pengajuan
+  static async hapusPengajuan(req, res) {
+    try {
+      const id = parseInt(req.params.id, 10);
+      if (Number.isNaN(id)) {
+        return R.badRequest(res, 'ID pengajuan tidak valid');
+      }
+
+      const result = await RekomendasiSuratAhliWarisModel.deletePengajuan(id);
+
+      if (result.success && result.affectedRows > 0) {
+        return R.ok(res, 'Pengajuan rekomendasi surat ahli waris berhasil dihapus', null);
+      }
+
+      if (result.success && result.affectedRows === 0) {
+        return R.notFound(res, 'Pengajuan rekomendasi surat ahli waris tidak ditemukan');
+      }
+
+      return R.serverError(res, 'Gagal menghapus pengajuan rekomendasi surat ahli waris');
+    } catch (error) {
+      return R.serverError(res);
+    }
+  }
+}
+
+module.exports = RekomendasiSuratAhliWarisController;
