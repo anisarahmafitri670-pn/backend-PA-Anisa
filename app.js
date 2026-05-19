@@ -52,6 +52,14 @@ app.use(rekomendasiSuratTanahRoute);
 app.use(rekomendasiSuratAhliWarisRoute);
 app.use(rekomendasiSuratYayasanRoute);
 
+// Root endpoint
+app.get('/', (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: 'Backend Sistem Pelayanan Terpadu Rantau Kopar berhasil berjalan'
+  });
+});
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error(err.stack);
