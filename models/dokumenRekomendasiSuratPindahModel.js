@@ -83,4 +83,3 @@ class DokumenRekomendasiSuratPindahModel {
 }
 
 module.exports = DokumenRekomendasiSuratPindahModel;
-

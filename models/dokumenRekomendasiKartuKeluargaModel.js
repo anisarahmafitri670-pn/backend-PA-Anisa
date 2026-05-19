@@ -83,4 +83,3 @@ class DokumenRekomendasiKartuKeluargaModel {
 }
 
 module.exports = DokumenRekomendasiKartuKeluargaModel;
-

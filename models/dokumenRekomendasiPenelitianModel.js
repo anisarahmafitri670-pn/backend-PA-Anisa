@@ -83,4 +83,3 @@ class DokumenRekomendasiPenelitianModel {
 }
 
 module.exports = DokumenRekomendasiPenelitianModel;
-

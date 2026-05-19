@@ -83,4 +83,3 @@ class DokumenRekomendasiSuratKerjaModel {
 }
 
 module.exports = DokumenRekomendasiSuratKerjaModel;
-

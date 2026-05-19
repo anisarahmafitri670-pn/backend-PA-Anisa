@@ -83,4 +83,3 @@ class DokumenRekomendasiSuratAhliWarisModel {
 }
 
 module.exports = DokumenRekomendasiSuratAhliWarisModel;
-

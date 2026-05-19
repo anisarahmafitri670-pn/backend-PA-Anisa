@@ -83,4 +83,3 @@ class DokumenRekomendasiAktaKelahiranModel {
 }
 
 module.exports = DokumenRekomendasiAktaKelahiranModel;
-

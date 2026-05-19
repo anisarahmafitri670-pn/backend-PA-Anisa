@@ -83,4 +83,3 @@ class DokumenRekomendasiSuratTanahModel {
 }
 
 module.exports = DokumenRekomendasiSuratTanahModel;
-

@@ -60,7 +60,9 @@ class DokumenRekomendasiAktaKelahiranController {
 
       const upsert = await DokumenModel.upsertDokumen(idPengajuan, dokumenData);
       if (!upsert.success) {
-        return R.serverError(res, 'Gagal menyimpan dokumen ke database');
+        const isDev = (process.env.NODE_ENV || '').toLowerCase() === 'development';
+        const detail = upsert.error ? `: ${upsert.error}` : '';
+        return R.serverError(res, isDev ? `Gagal menyimpan dokumen ke database${detail}` : 'Gagal menyimpan dokumen ke database');
       }
 
       if (existing.data && existing.data.file_path && existing.data.file_path !== relativePath) {
@@ -97,4 +99,3 @@ class DokumenRekomendasiAktaKelahiranController {
 }
 
 module.exports = { DokumenRekomendasiAktaKelahiranController, JENIS_DOKUMEN_AKTA_KELAHIRAN };
-
