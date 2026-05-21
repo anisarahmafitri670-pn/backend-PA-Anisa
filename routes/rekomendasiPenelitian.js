@@ -16,13 +16,7 @@ router.delete('/api/rekomendasi_penelitian/:id', auth, RekomendasiPenelitianCont
 router.post(
   '/api/rekomendasi_penelitian/:id/dokumen',
   auth,
-  upload.fields([
-    { name: 'ktp_mahasiswa', maxCount: 1 },
-    { name: 'ktm_mahasiswa', maxCount: 1 },
-    { name: 'surat_rekomendasi_riset_univ_kesbangpol', maxCount: 1 },
-    // legacy support: jenis_dokumen + file
-    { name: 'file', maxCount: 1 }
-  ]),
+  upload.any(),
   DokumenRekomendasiPenelitianController.uploadDokumen
 );
 

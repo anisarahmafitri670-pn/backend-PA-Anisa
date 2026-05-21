@@ -19,6 +19,17 @@ function getMulterFileFromFields(reqFiles, fieldName) {
   return entry[0];
 }
 
+function normalizeReqFiles(reqFiles) {
+  if (!reqFiles) return { type: 'none', filesArray: [], filesMap: {} };
+  if (Array.isArray(reqFiles)) {
+    return { type: 'array', filesArray: reqFiles, filesMap: {} };
+  }
+  if (typeof reqFiles === 'object') {
+    return { type: 'map', filesArray: [], filesMap: reqFiles };
+  }
+  return { type: 'unknown', filesArray: [], filesMap: {} };
+}
+
 class DokumenRekomendasiPenelitianController {
   static async uploadDokumen(req, res) {
     try {
@@ -31,14 +42,23 @@ class DokumenRekomendasiPenelitianController {
       const cloudinaryFolder = `uploads/penelitian/${idPengajuan}`;
 
       // New mode: 3 files at once (field name becomes jenis_dokumen)
-      const filesMap = req.files || {};
+      const normalized = normalizeReqFiles(req.files);
+      const filesMap = normalized.filesMap;
       const multiFieldNames = ['ktp_mahasiswa', 'ktm_mahasiswa', 'surat_rekomendasi_riset_univ_kesbangpol'];
-      const multiUploads = multiFieldNames
-        .map((fieldName) => ({ fieldName, file: getMulterFileFromFields(filesMap, fieldName) }))
-        .filter((x) => !!x.file);
+      const multiUploads =
+        normalized.type === 'array'
+          ? normalized.filesArray
+              .filter((file) => multiFieldNames.includes(file.fieldname))
+              .map((file) => ({ fieldName: file.fieldname, file }))
+          : multiFieldNames
+              .map((fieldName) => ({ fieldName, file: getMulterFileFromFields(filesMap, fieldName) }))
+              .filter((x) => !!x.file);
 
       // Legacy mode: jenis_dokumen + file
-      const legacyFile = getMulterFileFromFields(filesMap, 'file') || req.file || null;
+      const legacyFile =
+        normalized.type === 'array'
+          ? normalized.filesArray.find((file) => file.fieldname === 'file') || req.file || null
+          : getMulterFileFromFields(filesMap, 'file') || req.file || null;
 
       if (multiUploads.length === 0 && !legacyFile) {
         return R.badRequest(res, 'File wajib diupload');
