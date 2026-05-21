@@ -33,6 +33,8 @@ function normalizeReqFiles(reqFiles) {
 class DokumenRekomendasiPenelitianController {
   static async uploadDokumen(req, res) {
     try {
+      console.log('REQ FILES:', req.files);
+
       const idPengajuan = parseInt(req.params.id, 10);
       if (Number.isNaN(idPengajuan)) {
         return R.badRequest(res, 'ID pengajuan tidak valid');
@@ -48,8 +50,14 @@ class DokumenRekomendasiPenelitianController {
       const multiUploads =
         normalized.type === 'array'
           ? normalized.filesArray
-              .filter((file) => multiFieldNames.includes(file.fieldname))
-              .map((file) => ({ fieldName: file.fieldname, file }))
+              .map((file) => ({ fieldName: String(file.fieldname || '').trim(), file }))
+              .filter(({ fieldName }) => {
+                if (!multiFieldNames.includes(fieldName)) {
+                  if (fieldName) console.log('FIELD FILE TIDAK DIKENAL:', fieldName);
+                  return false;
+                }
+                return true;
+              })
           : multiFieldNames
               .map((fieldName) => ({ fieldName, file: getMulterFileFromFields(filesMap, fieldName) }))
               .filter((x) => !!x.file);
