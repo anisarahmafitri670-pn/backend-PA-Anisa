@@ -120,7 +120,8 @@ class DokumenRekomendasiPenelitianController {
         dokumen: uploadedDocs
       });
     } catch (error) {
-      return R.serverError(res);
+      console.error('UPLOAD DOKUMEN PENELITIAN ERROR:', error);
+      return R.serverError(res, error.message || 'Terjadi kesalahan pada server');
     }
   }
 
