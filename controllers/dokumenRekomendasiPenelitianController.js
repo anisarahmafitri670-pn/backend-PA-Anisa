@@ -1,7 +1,6 @@
-const fs = require('fs');
-const path = require('path');
 const R = require('../utils/response');
 const DokumenModel = require('../models/dokumenRekomendasiPenelitianModel');
+const { uploadToCloudinary } = require('../middleware/uploadPenelitian');
 
 const JENIS_DOKUMEN_PENELITIAN = new Set([
   'ktp_mahasiswa',
@@ -9,12 +8,8 @@ const JENIS_DOKUMEN_PENELITIAN = new Set([
   'surat_rekomendasi_riset_univ_kesbangpol'
 ]);
 
-function safeUnlink(filePath) {
-  try {
-    fs.unlinkSync(filePath);
-  } catch (_) {
-    // ignore
-  }
+function detectResourceType(mimeType) {
+  return mimeType === 'application/pdf' ? 'raw' : 'image';
 }
 
 class DokumenRekomendasiPenelitianController {
@@ -37,10 +32,10 @@ class DokumenRekomendasiPenelitianController {
         return R.badRequest(res, 'File wajib diupload');
       }
 
-      const relativePath = path
-        .relative(process.cwd(), req.file.path)
-        .split(path.sep)
-        .join('/');
+      const folder = `uploads/penelitian/${idPengajuan}`;
+      const publicId = `${jenisDokumen}_${Date.now()}`;
+      const resourceType = detectResourceType(req.file.mimetype);
+      const cloudinaryResult = await uploadToCloudinary(req.file.buffer, folder, resourceType, publicId);
 
       const existing = await DokumenModel.getByPengajuanAndJenis(idPengajuan, jenisDokumen);
       if (!existing.success) {
@@ -49,7 +44,7 @@ class DokumenRekomendasiPenelitianController {
 
       const dokumenData = {
         jenis_dokumen: jenisDokumen,
-        file_path: relativePath,
+        file_path: cloudinaryResult.secure_url,
         original_name: req.file.originalname,
         mime_type: req.file.mimetype,
         file_size: req.file.size
@@ -58,11 +53,6 @@ class DokumenRekomendasiPenelitianController {
       const upsert = await DokumenModel.upsertDokumen(idPengajuan, dokumenData);
       if (!upsert.success) {
         return R.serverError(res, 'Gagal menyimpan dokumen ke database');
-      }
-
-      if (existing.data && existing.data.file_path && existing.data.file_path !== relativePath) {
-        const oldAbs = path.join(process.cwd(), existing.data.file_path);
-        safeUnlink(oldAbs);
       }
 
       return R.created(res, 'Dokumen berhasil diupload', {
