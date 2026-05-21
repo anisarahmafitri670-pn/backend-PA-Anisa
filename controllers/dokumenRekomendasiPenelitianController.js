@@ -12,6 +12,13 @@ function detectResourceType(mimeType) {
   return mimeType === 'application/pdf' ? 'raw' : 'image';
 }
 
+function getMulterFileFromFields(reqFiles, fieldName) {
+  if (!reqFiles || typeof reqFiles !== 'object') return null;
+  const entry = reqFiles[fieldName];
+  if (!entry || !Array.isArray(entry) || entry.length === 0) return null;
+  return entry[0];
+}
+
 class DokumenRekomendasiPenelitianController {
   static async uploadDokumen(req, res) {
     try {
@@ -20,44 +27,97 @@ class DokumenRekomendasiPenelitianController {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
 
-      const jenisDokumen = String(req.body.jenis_dokumen || '').trim();
-      if (!jenisDokumen) {
-        return R.badRequest(res, 'jenis_dokumen wajib diisi');
-      }
-      if (!JENIS_DOKUMEN_PENELITIAN.has(jenisDokumen)) {
-        return R.badRequest(res, 'jenis_dokumen tidak valid');
-      }
+      const uploadedDocs = [];
+      const cloudinaryFolder = `uploads/penelitian/${idPengajuan}`;
 
-      if (!req.file) {
+      // New mode: 3 files at once (field name becomes jenis_dokumen)
+      const filesMap = req.files || {};
+      const multiFieldNames = ['ktp_mahasiswa', 'ktm_mahasiswa', 'surat_rekomendasi_riset_univ_kesbangpol'];
+      const multiUploads = multiFieldNames
+        .map((fieldName) => ({ fieldName, file: getMulterFileFromFields(filesMap, fieldName) }))
+        .filter((x) => !!x.file);
+
+      // Legacy mode: jenis_dokumen + file
+      const legacyFile = getMulterFileFromFields(filesMap, 'file') || req.file || null;
+
+      if (multiUploads.length === 0 && !legacyFile) {
         return R.badRequest(res, 'File wajib diupload');
       }
 
-      const folder = `uploads/penelitian/${idPengajuan}`;
-      const publicId = `${jenisDokumen}_${Date.now()}`;
-      const resourceType = detectResourceType(req.file.mimetype);
-      const cloudinaryResult = await uploadToCloudinary(req.file.buffer, folder, resourceType, publicId);
+      if (multiUploads.length > 0) {
+        for (const { fieldName, file } of multiUploads) {
+          const jenisDokumen = fieldName;
+          if (!JENIS_DOKUMEN_PENELITIAN.has(jenisDokumen)) {
+            return R.badRequest(res, 'jenis_dokumen tidak valid');
+          }
 
-      const existing = await DokumenModel.getByPengajuanAndJenis(idPengajuan, jenisDokumen);
-      if (!existing.success) {
-        return R.serverError(res, 'Gagal cek dokumen sebelumnya');
-      }
+          const resourceType = detectResourceType(file.mimetype);
+          const publicId = `${jenisDokumen}_${Date.now()}`;
 
-      const dokumenData = {
-        jenis_dokumen: jenisDokumen,
-        file_path: cloudinaryResult.secure_url,
-        original_name: req.file.originalname,
-        mime_type: req.file.mimetype,
-        file_size: req.file.size
-      };
+          let cloudinaryResult;
+          try {
+            cloudinaryResult = await uploadToCloudinary(file.buffer, cloudinaryFolder, resourceType, publicId);
+          } catch (error) {
+            const detail = error && error.message ? `: ${error.message}` : '';
+            return R.serverError(res, `Gagal upload ke Cloudinary${detail}`);
+          }
 
-      const upsert = await DokumenModel.upsertDokumen(idPengajuan, dokumenData);
-      if (!upsert.success) {
-        return R.serverError(res, 'Gagal menyimpan dokumen ke database');
+          const dokumenData = {
+            jenis_dokumen: jenisDokumen,
+            file_path: cloudinaryResult.secure_url,
+            original_name: file.originalname,
+            mime_type: file.mimetype,
+            file_size: file.size
+          };
+
+          const upsert = await DokumenModel.upsertDokumen(idPengajuan, dokumenData);
+          if (!upsert.success) {
+            const detail = upsert.error ? `: ${upsert.error}` : '';
+            return R.serverError(res, `Gagal menyimpan dokumen ke database${detail}`);
+          }
+
+          uploadedDocs.push(dokumenData);
+        }
+      } else if (legacyFile) {
+        const jenisDokumen = String(req.body.jenis_dokumen || '').trim();
+        if (!jenisDokumen) {
+          return R.badRequest(res, 'jenis_dokumen wajib diisi');
+        }
+        if (!JENIS_DOKUMEN_PENELITIAN.has(jenisDokumen)) {
+          return R.badRequest(res, 'jenis_dokumen tidak valid');
+        }
+
+        const resourceType = detectResourceType(legacyFile.mimetype);
+        const publicId = `${jenisDokumen}_${Date.now()}`;
+
+        let cloudinaryResult;
+        try {
+          cloudinaryResult = await uploadToCloudinary(legacyFile.buffer, cloudinaryFolder, resourceType, publicId);
+        } catch (error) {
+          const detail = error && error.message ? `: ${error.message}` : '';
+          return R.serverError(res, `Gagal upload ke Cloudinary${detail}`);
+        }
+
+        const dokumenData = {
+          jenis_dokumen: jenisDokumen,
+          file_path: cloudinaryResult.secure_url,
+          original_name: legacyFile.originalname,
+          mime_type: legacyFile.mimetype,
+          file_size: legacyFile.size
+        };
+
+        const upsert = await DokumenModel.upsertDokumen(idPengajuan, dokumenData);
+        if (!upsert.success) {
+          const detail = upsert.error ? `: ${upsert.error}` : '';
+          return R.serverError(res, `Gagal menyimpan dokumen ke database${detail}`);
+        }
+
+        uploadedDocs.push(dokumenData);
       }
 
       return R.created(res, 'Dokumen berhasil diupload', {
         id_pengajuan: idPengajuan,
-        ...dokumenData
+        dokumen: uploadedDocs
       });
     } catch (error) {
       return R.serverError(res);
