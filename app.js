@@ -27,6 +27,8 @@ app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// Static files (uploads)
+app.use('/uploads', express.static('uploads'));
 
 // Import routes
 const rekomendasiPenelitianRoute = require('./routes/rekomendasiPenelitian');

@@ -1,16 +1,12 @@
 const R = require('../utils/response');
 const DokumenModel = require('../models/dokumenRekomendasiPenelitianModel');
-const { uploadToCloudinary } = require('../middleware/uploadPenelitian');
+const { toPosixRelative, safeUnlinkRelativeUpload } = require('../utils/uploadFiles');
 
 const JENIS_DOKUMEN_PENELITIAN = new Set([
   'ktp_mahasiswa',
   'ktm_mahasiswa',
   'surat_rekomendasi_riset_univ_kesbangpol'
 ]);
-
-function detectResourceType(mimeType) {
-  return mimeType === 'application/pdf' ? 'raw' : 'image';
-}
 
 function getMulterFileFromFields(reqFiles, fieldName) {
   if (!reqFiles || typeof reqFiles !== 'object') return null;
@@ -33,7 +29,9 @@ function normalizeReqFiles(reqFiles) {
 class DokumenRekomendasiPenelitianController {
   static async uploadDokumen(req, res) {
     try {
-      console.log('REQ FILES:', req.files);
+      if ((process.env.NODE_ENV || '').toLowerCase() === 'development') {
+        console.log('REQ FILES:', req.files);
+      }
 
       const idPengajuan = parseInt(req.params.id, 10);
       if (Number.isNaN(idPengajuan)) {
@@ -41,7 +39,6 @@ class DokumenRekomendasiPenelitianController {
       }
 
       const uploadedDocs = [];
-      const cloudinaryFolder = `uploads/penelitian/${idPengajuan}`;
 
       // New mode: 3 files at once (field name becomes jenis_dokumen)
       const normalized = normalizeReqFiles(req.files);
@@ -79,29 +76,29 @@ class DokumenRekomendasiPenelitianController {
             return R.badRequest(res, 'jenis_dokumen tidak valid');
           }
 
-          const resourceType = detectResourceType(file.mimetype);
-          const publicId = `${jenisDokumen}_${Date.now()}`;
-
-          let cloudinaryResult;
-          try {
-            cloudinaryResult = await uploadToCloudinary(file.buffer, cloudinaryFolder, resourceType, publicId);
-          } catch (error) {
-            const detail = error && error.message ? `: ${error.message}` : '';
-            return R.serverError(res, `Gagal upload ke Cloudinary${detail}`);
-          }
+          const relativePath = toPosixRelative(file.path);
 
           const dokumenData = {
             jenis_dokumen: jenisDokumen,
-            file_path: cloudinaryResult.secure_url,
+            file_path: relativePath,
             original_name: file.originalname,
             mime_type: file.mimetype,
             file_size: file.size
           };
 
+          const existing = await DokumenModel.getByPengajuanAndJenis(idPengajuan, jenisDokumen);
+          if (!existing.success) {
+            return R.serverError(res, `Gagal cek dokumen sebelumnya: ${existing.error || ''}`.trim());
+          }
+
           const upsert = await DokumenModel.upsertDokumen(idPengajuan, dokumenData);
           if (!upsert.success) {
             const detail = upsert.error ? `: ${upsert.error}` : '';
             return R.serverError(res, `Gagal menyimpan dokumen ke database${detail}`);
+          }
+
+          if (existing.data && existing.data.file_path && existing.data.file_path !== relativePath) {
+            safeUnlinkRelativeUpload(existing.data.file_path);
           }
 
           uploadedDocs.push(dokumenData);
@@ -115,29 +112,29 @@ class DokumenRekomendasiPenelitianController {
           return R.badRequest(res, 'jenis_dokumen tidak valid');
         }
 
-        const resourceType = detectResourceType(legacyFile.mimetype);
-        const publicId = `${jenisDokumen}_${Date.now()}`;
-
-        let cloudinaryResult;
-        try {
-          cloudinaryResult = await uploadToCloudinary(legacyFile.buffer, cloudinaryFolder, resourceType, publicId);
-        } catch (error) {
-          const detail = error && error.message ? `: ${error.message}` : '';
-          return R.serverError(res, `Gagal upload ke Cloudinary${detail}`);
-        }
+        const relativePath = toPosixRelative(legacyFile.path);
 
         const dokumenData = {
           jenis_dokumen: jenisDokumen,
-          file_path: cloudinaryResult.secure_url,
+          file_path: relativePath,
           original_name: legacyFile.originalname,
           mime_type: legacyFile.mimetype,
           file_size: legacyFile.size
         };
 
+        const existing = await DokumenModel.getByPengajuanAndJenis(idPengajuan, jenisDokumen);
+        if (!existing.success) {
+          return R.serverError(res, `Gagal cek dokumen sebelumnya: ${existing.error || ''}`.trim());
+        }
+
         const upsert = await DokumenModel.upsertDokumen(idPengajuan, dokumenData);
         if (!upsert.success) {
           const detail = upsert.error ? `: ${upsert.error}` : '';
           return R.serverError(res, `Gagal menyimpan dokumen ke database${detail}`);
+        }
+
+        if (existing.data && existing.data.file_path && existing.data.file_path !== relativePath) {
+          safeUnlinkRelativeUpload(existing.data.file_path);
         }
 
         uploadedDocs.push(dokumenData);

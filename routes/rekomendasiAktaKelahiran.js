@@ -16,7 +16,7 @@ router.delete('/api/rekomendasi_akta_kelahiran/:id', auth, RekomendasiAktaKelahi
 router.post(
   '/api/rekomendasi_akta_kelahiran/:id/dokumen',
   auth,
-  upload.single('file'),
+  upload.any(),
   DokumenRekomendasiAktaKelahiranController.uploadDokumen
 );
 

@@ -16,7 +16,7 @@ router.delete('/api/rekomendasi_kartu_keluarga/:id', auth, RekomendasiKartuKelua
 router.post(
   '/api/rekomendasi_kartu_keluarga/:id/dokumen',
   auth,
-  upload.single('file'),
+  upload.any(),
   DokumenRekomendasiKartuKeluargaController.uploadDokumen
 );
 

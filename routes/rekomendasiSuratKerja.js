@@ -16,7 +16,7 @@ router.delete('/api/rekomendasi_surat_kerja/:id', auth, RekomendasiSuratKerjaCon
 router.post(
   '/api/rekomendasi_surat_kerja/:id/dokumen',
   auth,
-  upload.single('file'),
+  upload.any(),
   DokumenRekomendasiSuratKerjaController.uploadDokumen
 );
 

@@ -16,7 +16,7 @@ router.delete('/api/rekomendasi_surat_tanah/:id', auth, RekomendasiSuratTanahCon
 router.post(
   '/api/rekomendasi_surat_tanah/:id/dokumen',
   auth,
-  upload.single('file'),
+  upload.any(),
   DokumenRekomendasiSuratTanahController.uploadDokumen
 );
 

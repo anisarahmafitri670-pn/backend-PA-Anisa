@@ -1,69 +1,110 @@
-const fs = require('fs');
-const path = require('path');
 const R = require('../utils/response');
 const DokumenModel = require('../models/dokumenRekomendasiSuratKerjaModel');
+const { toPosixRelative, safeUnlinkRelativeUpload } = require('../utils/uploadFiles');
 
 const JENIS_DOKUMEN_SURAT_KERJA = new Set(['ktp']);
 
-function safeUnlink(filePath) {
-  try {
-    fs.unlinkSync(filePath);
-  } catch (_) {
-    // ignore
-  }
+function normalizeFiles(reqFiles) {
+  if (!reqFiles) return [];
+  if (Array.isArray(reqFiles)) return reqFiles;
+  if (typeof reqFiles === 'object') return Object.values(reqFiles).flat();
+  return [];
 }
 
 class DokumenRekomendasiSuratKerjaController {
   static async uploadDokumen(req, res) {
     try {
+      if ((process.env.NODE_ENV || '').toLowerCase() === 'development') {
+        console.log('REQ FILES SURAT KERJA:', req.files);
+      }
+
       const idPengajuan = parseInt(req.params.id, 10);
       if (Number.isNaN(idPengajuan)) {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
 
-      const jenisDokumen = String(req.body.jenis_dokumen || '').trim();
-      if (!jenisDokumen) {
-        return R.badRequest(res, 'jenis_dokumen wajib diisi');
-      }
-      if (!JENIS_DOKUMEN_SURAT_KERJA.has(jenisDokumen)) {
-        return R.badRequest(res, 'jenis_dokumen tidak valid');
-      }
+      const files = normalizeFiles(req.files);
+      const legacyFile = files.find((f) => String(f.fieldname || '').trim() === 'file') || req.file || null;
 
-      if (!req.file) {
+      if (files.length === 0 && !legacyFile) {
         return R.badRequest(res, 'File wajib diupload');
       }
 
-      const relativePath = path
-        .relative(process.cwd(), req.file.path)
-        .split(path.sep)
-        .join('/');
+      const uploadedDocs = [];
 
-      const existing = await DokumenModel.getByPengajuanAndJenis(idPengajuan, jenisDokumen);
-      if (!existing.success) {
-        return R.serverError(res, 'Gagal cek dokumen sebelumnya');
+      for (const file of files.filter((f) => String(f.fieldname || '').trim() !== 'file')) {
+        const jenisDokumen = String(file.fieldname || '').trim();
+        if (!JENIS_DOKUMEN_SURAT_KERJA.has(jenisDokumen)) {
+          console.log('FIELD FILE TIDAK DIKENAL (SURAT KERJA):', jenisDokumen);
+          continue;
+        }
+
+        const relativePath = toPosixRelative(file.path);
+        const existing = await DokumenModel.getByPengajuanAndJenis(idPengajuan, jenisDokumen);
+        if (!existing.success) {
+          return R.serverError(res, `Gagal cek dokumen sebelumnya: ${existing.error || ''}`.trim());
+        }
+
+        const dokumenData = {
+          jenis_dokumen: jenisDokumen,
+          file_path: relativePath,
+          original_name: file.originalname,
+          mime_type: file.mimetype,
+          file_size: file.size
+        };
+
+        const upsert = await DokumenModel.upsertDokumen(idPengajuan, dokumenData);
+        if (!upsert.success) {
+          const detail = upsert.error ? `: ${upsert.error}` : '';
+          return R.serverError(res, `Gagal menyimpan dokumen ke database${detail}`);
+        }
+
+        if (existing.data && existing.data.file_path && existing.data.file_path !== relativePath) {
+          safeUnlinkRelativeUpload(existing.data.file_path);
+        }
+
+        uploadedDocs.push(dokumenData);
       }
 
-      const dokumenData = {
-        jenis_dokumen: jenisDokumen,
-        file_path: relativePath,
-        original_name: req.file.originalname,
-        mime_type: req.file.mimetype,
-        file_size: req.file.size
-      };
+      if (uploadedDocs.length === 0 && legacyFile) {
+        const jenisDokumen = String(req.body.jenis_dokumen || '').trim();
+        if (!jenisDokumen) {
+          return R.badRequest(res, 'jenis_dokumen wajib diisi');
+        }
+        if (!JENIS_DOKUMEN_SURAT_KERJA.has(jenisDokumen)) {
+          return R.badRequest(res, 'jenis_dokumen tidak valid');
+        }
 
-      const upsert = await DokumenModel.upsertDokumen(idPengajuan, dokumenData);
-      if (!upsert.success) {
-        return R.serverError(res, 'Gagal menyimpan dokumen ke database');
-      }
+        const relativePath = toPosixRelative(legacyFile.path);
+        const existing = await DokumenModel.getByPengajuanAndJenis(idPengajuan, jenisDokumen);
+        if (!existing.success) {
+          return R.serverError(res, `Gagal cek dokumen sebelumnya: ${existing.error || ''}`.trim());
+        }
 
-      if (existing.data && existing.data.file_path && existing.data.file_path !== relativePath) {
-        const oldAbs = path.join(process.cwd(), existing.data.file_path);
-        safeUnlink(oldAbs);
+        const dokumenData = {
+          jenis_dokumen: jenisDokumen,
+          file_path: relativePath,
+          original_name: legacyFile.originalname,
+          mime_type: legacyFile.mimetype,
+          file_size: legacyFile.size
+        };
+
+        const upsert = await DokumenModel.upsertDokumen(idPengajuan, dokumenData);
+        if (!upsert.success) {
+          const detail = upsert.error ? `: ${upsert.error}` : '';
+          return R.serverError(res, `Gagal menyimpan dokumen ke database${detail}`);
+        }
+
+        if (existing.data && existing.data.file_path && existing.data.file_path !== relativePath) {
+          safeUnlinkRelativeUpload(existing.data.file_path);
+        }
+
+        uploadedDocs.push(dokumenData);
       }
 
       return R.created(res, 'Dokumen berhasil diupload', {
         id_pengajuan: idPengajuan,
-        ...dokumenData
+        dokumen: uploadedDocs
       });
     } catch (error) {
       return R.serverError(res);
@@ -90,4 +131,3 @@ class DokumenRekomendasiSuratKerjaController {
 }
 
 module.exports = { DokumenRekomendasiSuratKerjaController, JENIS_DOKUMEN_SURAT_KERJA };
-

@@ -16,7 +16,7 @@ router.delete('/api/rekomendasi_surat_pindah/:id', auth, RekomendasiSuratPindahC
 router.post(
   '/api/rekomendasi_surat_pindah/:id/dokumen',
   auth,
-  upload.single('file'),
+  upload.any(),
   DokumenRekomendasiSuratPindahController.uploadDokumen
 );
 
