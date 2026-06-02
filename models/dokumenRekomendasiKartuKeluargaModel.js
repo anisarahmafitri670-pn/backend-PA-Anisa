@@ -12,6 +12,18 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
+// Test database connection on startup
+(async () => {
+  try {
+    const connection = await pool.getConnection();
+    console.log('✅ Database AlwaysData Connected');
+    connection.release();
+  } catch (error) {
+    console.error('❌ Database Connection Failed');
+    console.error(error);
+  }
+})();
+
 const TABLE_NAME = 'dokumen_rekomendasi_kartu_keluarga';
 
 class DokumenRekomendasiKartuKeluargaModel {

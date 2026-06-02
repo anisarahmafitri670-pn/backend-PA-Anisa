@@ -13,6 +13,18 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
+// Test database connection on startup
+(async () => {
+  try {
+    const connection = await pool.getConnection();
+    console.log('✅ Database AlwaysData Connected');
+    connection.release();
+  } catch (error) {
+    console.error('❌ Database Connection Failed');
+    console.error(error);
+  }
+})();
+
 class Database {
   // Simpan pengajuan rekomendasi surat pindah ke database
   static async savePengajuan(pengajuanData) {

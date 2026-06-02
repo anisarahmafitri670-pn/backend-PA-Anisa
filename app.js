@@ -81,7 +81,8 @@ app.use((req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.IP || process.env.HOST || '0.0.0.0';
 
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server berjalan di http://localhost:${PORT}`);
+app.listen(PORT, HOST, () => {
+  console.log(`Server berjalan di http://${HOST}:${PORT}`);
 });
