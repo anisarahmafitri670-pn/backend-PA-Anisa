@@ -27,4 +27,10 @@ router.get(
   DokumenRekomendasiKartuKeluargaController.listDokumen
 );
 
+router.delete(
+  '/api/rekomendasi_kartu_keluarga/:id/dokumen/:jenis_dokumen',
+  auth,
+  DokumenRekomendasiKartuKeluargaController.hapusDokumen
+);
+
 module.exports = router;

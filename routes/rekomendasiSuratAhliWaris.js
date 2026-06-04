@@ -27,4 +27,10 @@ router.get(
   DokumenRekomendasiSuratAhliWarisController.listDokumen
 );
 
+router.delete(
+  '/api/rekomendasi_surat_ahli_waris/:id/dokumen/:jenis_dokumen',
+  auth,
+  DokumenRekomendasiSuratAhliWarisController.hapusDokumen
+);
+
 module.exports = router;

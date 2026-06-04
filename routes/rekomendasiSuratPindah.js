@@ -27,4 +27,10 @@ router.get(
   DokumenRekomendasiSuratPindahController.listDokumen
 );
 
+router.delete(
+  '/api/rekomendasi_surat_pindah/:id/dokumen/:jenis_dokumen',
+  auth,
+  DokumenRekomendasiSuratPindahController.hapusDokumen
+);
+
 module.exports = router;

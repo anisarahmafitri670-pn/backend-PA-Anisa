@@ -27,4 +27,10 @@ router.get(
   DokumenRekomendasiSuratTanahController.listDokumen
 );
 
+router.delete(
+  '/api/rekomendasi_surat_tanah/:id/dokumen/:jenis_dokumen',
+  auth,
+  DokumenRekomendasiSuratTanahController.hapusDokumen
+);
+
 module.exports = router;

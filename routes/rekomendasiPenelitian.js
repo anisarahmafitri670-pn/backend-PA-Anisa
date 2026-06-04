@@ -27,4 +27,10 @@ router.get(
   DokumenRekomendasiPenelitianController.listDokumen
 );
 
+router.delete(
+  '/api/rekomendasi_penelitian/:id/dokumen/:jenis_dokumen',
+  auth,
+  DokumenRekomendasiPenelitianController.hapusDokumen
+);
+
 module.exports = router;

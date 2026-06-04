@@ -10,6 +10,16 @@ const JENIS_DOKUMEN_KARTU_KELUARGA = new Set([
   'akta_kelahiran_dan_suket_wni_tionghoa'
 ]);
 
+const ALIAS_JENIS_DOKUMEN = new Map([
+  ['akta_suket_wni_tionghoa', 'akta_kelahiran_dan_suket_wni_tionghoa'],
+  ['surat_ket_wni', 'akta_kelahiran_dan_suket_wni_tionghoa']
+]);
+
+function normalizeJenisDokumen(value) {
+  const jenisDokumen = String(value || '').trim();
+  return ALIAS_JENIS_DOKUMEN.get(jenisDokumen) || jenisDokumen;
+}
+
 function normalizeFiles(reqFiles) {
   if (!reqFiles) return [];
   if (Array.isArray(reqFiles)) return reqFiles;
@@ -39,7 +49,7 @@ class DokumenRekomendasiKartuKeluargaController {
       const uploadedDocs = [];
 
       for (const file of files.filter((f) => String(f.fieldname || '').trim() !== 'file')) {
-        const jenisDokumen = String(file.fieldname || '').trim();
+        const jenisDokumen = normalizeJenisDokumen(file.fieldname);
         if (!JENIS_DOKUMEN_KARTU_KELUARGA.has(jenisDokumen)) {
           console.log('FIELD FILE TIDAK DIKENAL (KARTU KELUARGA):', jenisDokumen);
           continue;
@@ -73,7 +83,7 @@ class DokumenRekomendasiKartuKeluargaController {
       }
 
       if (uploadedDocs.length === 0 && legacyFile) {
-        const jenisDokumen = String(req.body.jenis_dokumen || '').trim();
+        const jenisDokumen = normalizeJenisDokumen(req.body.jenis_dokumen);
         if (!jenisDokumen) {
           return R.badRequest(res, 'jenis_dokumen wajib diisi');
         }
@@ -132,6 +142,49 @@ class DokumenRekomendasiKartuKeluargaController {
       return R.serverError(res, 'Gagal mengambil data dokumen');
     } catch (error) {
       return R.serverError(res);
+    }
+  }
+
+  static async hapusDokumen(req, res) {
+    try {
+      const idPengajuan = parseInt(req.params.id, 10);
+      if (Number.isNaN(idPengajuan)) {
+        return R.badRequest(res, 'ID pengajuan tidak valid');
+      }
+
+      const jenisDokumen = normalizeJenisDokumen(req.params.jenis_dokumen);
+      if (!jenisDokumen || !JENIS_DOKUMEN_KARTU_KELUARGA.has(jenisDokumen)) {
+        return R.badRequest(res, 'jenis_dokumen tidak valid');
+      }
+
+      const existing = await DokumenModel.getByPengajuanAndJenis(idPengajuan, jenisDokumen);
+      if (!existing.success) {
+        return R.serverError(res, `Gagal cek dokumen: ${existing.error || ''}`.trim());
+      }
+
+      if (!existing.data) {
+        return R.notFound(res, 'Dokumen tidak ditemukan');
+      }
+
+      const deleted = await DokumenModel.deleteByPengajuanAndJenis(idPengajuan, jenisDokumen);
+      if (!deleted.success) {
+        return R.serverError(res, `Gagal menghapus dokumen dari database: ${deleted.error || ''}`.trim());
+      }
+
+      if (deleted.affectedRows === 0) {
+        return R.notFound(res, 'Dokumen tidak ditemukan');
+      }
+
+      if (existing.data.file_path) {
+        safeUnlinkRelativeUpload(existing.data.file_path);
+      }
+
+      return R.ok(res, 'Dokumen berhasil dihapus', {
+        id_pengajuan: idPengajuan,
+        jenis_dokumen: jenisDokumen
+      });
+    } catch (error) {
+      return R.serverError(res, error.message || 'Terjadi kesalahan pada server');
     }
   }
 }

@@ -27,4 +27,10 @@ router.get(
   DokumenRekomendasiSuratKerjaController.listDokumen
 );
 
+router.delete(
+  '/api/rekomendasi_surat_kerja/:id/dokumen/:jenis_dokumen',
+  auth,
+  DokumenRekomendasiSuratKerjaController.hapusDokumen
+);
+
 module.exports = router;

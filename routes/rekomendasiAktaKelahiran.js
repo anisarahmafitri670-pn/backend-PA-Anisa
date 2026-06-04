@@ -27,4 +27,10 @@ router.get(
   DokumenRekomendasiAktaKelahiranController.listDokumen
 );
 
+router.delete(
+  '/api/rekomendasi_akta_kelahiran/:id/dokumen/:jenis_dokumen',
+  auth,
+  DokumenRekomendasiAktaKelahiranController.hapusDokumen
+);
+
 module.exports = router;

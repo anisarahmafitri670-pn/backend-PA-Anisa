@@ -136,6 +136,53 @@ class DokumenRekomendasiAktaKelahiranController {
       return R.serverError(res);
     }
   }
+
+  static async hapusDokumen(req, res) {
+    try {
+      const idPengajuan = parseInt(req.params.id, 10);
+      if (Number.isNaN(idPengajuan)) {
+        return R.badRequest(res, 'ID pengajuan tidak valid');
+      }
+
+      const jenisDokumen = String(req.params.jenis_dokumen || '').trim();
+      if (!jenisDokumen) {
+        return R.badRequest(res, 'jenis_dokumen tidak valid');
+      }
+
+      if (!JENIS_DOKUMEN_AKTA_KELAHIRAN.has(jenisDokumen)) {
+        return R.badRequest(res, 'jenis_dokumen tidak valid');
+      }
+
+      const existing = await DokumenModel.getByPengajuanAndJenis(idPengajuan, jenisDokumen);
+      if (!existing.success) {
+        return R.serverError(res, `Gagal cek dokumen: ${existing.error || ''}`.trim());
+      }
+
+      if (!existing.data) {
+        return R.notFound(res, 'Dokumen tidak ditemukan');
+      }
+
+      const deleted = await DokumenModel.deleteByPengajuanAndJenis(idPengajuan, jenisDokumen);
+      if (!deleted.success) {
+        return R.serverError(res, `Gagal menghapus dokumen dari database: ${deleted.error || ''}`.trim());
+      }
+
+      if (deleted.affectedRows === 0) {
+        return R.notFound(res, 'Dokumen tidak ditemukan');
+      }
+
+      if (existing.data.file_path) {
+        safeUnlinkRelativeUpload(existing.data.file_path);
+      }
+
+      return R.ok(res, 'Dokumen berhasil dihapus', {
+        id_pengajuan: idPengajuan,
+        jenis_dokumen: jenisDokumen
+      });
+    } catch (error) {
+      return R.serverError(res, error.message || 'Terjadi kesalahan pada server');
+    }
+  }
 }
 
 module.exports = { DokumenRekomendasiAktaKelahiranController, JENIS_DOKUMEN_AKTA_KELAHIRAN };

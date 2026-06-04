@@ -27,4 +27,10 @@ router.get(
   DokumenRekomendasiSuratYayasanController.listDokumen
 );
 
+router.delete(
+  '/api/rekomendasi_surat_yayasan/:id/dokumen/:jenis_dokumen',
+  auth,
+  DokumenRekomendasiSuratYayasanController.hapusDokumen
+);
+
 module.exports = router;

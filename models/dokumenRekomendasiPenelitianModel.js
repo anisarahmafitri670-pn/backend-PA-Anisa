@@ -93,6 +93,22 @@ class DokumenRekomendasiPenelitianModel {
       if (connection) connection.release();
     }
   }
+
+  static async deleteByPengajuanAndJenis(idPengajuan, jenisDokumen) {
+    let connection;
+    try {
+      connection = await pool.getConnection();
+      const [result] = await connection.execute(
+        `DELETE FROM ${TABLE_NAME} WHERE id_pengajuan = ? AND jenis_dokumen = ?`,
+        [idPengajuan, jenisDokumen]
+      );
+      return { success: true, affectedRows: result.affectedRows };
+    } catch (error) {
+      return { success: false, error: error.message };
+    } finally {
+      if (connection) connection.release();
+    }
+  }
 }
 
 module.exports = DokumenRekomendasiPenelitianModel;
