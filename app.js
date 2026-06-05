@@ -33,6 +33,7 @@ app.use('/uploads', express.static('uploads'));
 // Import routes
 const rekomendasiPenelitianRoute = require('./routes/rekomendasiPenelitian');
 const authRoutes = require('./routes/auth');
+const profileRoutes = require('./routes/profile');
 const usersRoute = require('./routes/users');
 const rekomendasiSuratPindahRoute = require('./routes/rekomendasiSuratPindah');
 const rekomendasiAktaKelahiranRoute = require('./routes/rekomendasiAktaKelahiran');
@@ -45,6 +46,7 @@ const rekomendasiSuratYayasanRoute = require('./routes/rekomendasiSuratYayasan')
 // Gunakan routes
 app.use(rekomendasiPenelitianRoute);
 app.use('/api/auth', authRoutes);
+app.use('/api/profile', profileRoutes);
 app.use(usersRoute);
 app.use(rekomendasiSuratPindahRoute);
 app.use(rekomendasiAktaKelahiranRoute);
