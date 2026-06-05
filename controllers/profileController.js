@@ -73,7 +73,12 @@ class ProfileController {
       });
 
       if (result.success && result.affectedRows > 0) {
-        return R.ok(res, 'Profile berhasil diperbarui', null);
+        const updatedProfile = await ProfileModel.findById(idUser);
+        if (updatedProfile.success) {
+          return R.ok(res, 'Profile berhasil diperbarui', updatedProfile.data);
+        }
+
+        return R.serverError(res, 'Profile berhasil diperbarui, tetapi gagal mengambil data terbaru');
       }
 
       if (result.success && result.affectedRows === 0) {
