@@ -38,12 +38,13 @@ class ProfileModel {
       connection = await pool.getConnection();
       const query = `
         UPDATE users
-        SET nama_lengkap = ?, username = ?, no_hp = ?, alamat = ?, updated_at = NOW()
+        SET nama_lengkap = ?, username = ?, email = ?, no_hp = ?, alamat = ?, updated_at = NOW()
         WHERE id_user = ?
       `;
       const values = [
         profileData.nama_lengkap,
         profileData.username,
+        profileData.email,
         profileData.no_hp,
         profileData.alamat,
         idUser

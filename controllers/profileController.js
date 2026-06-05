@@ -5,6 +5,10 @@ function getTokenUserId(req) {
   return req.user && req.user.id_user ? Number(req.user.id_user) : null;
 }
 
+function isValidEmail(email) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 class ProfileController {
   static async getProfile(req, res) {
     try {
@@ -37,6 +41,7 @@ class ProfileController {
 
       const namaLengkap = (req.body.nama_lengkap || '').trim();
       const username = (req.body.username || '').trim();
+      const email = (req.body.email || '').trim().toLowerCase();
       const noHp = (req.body.no_hp || '').trim();
       const alamat = (req.body.alamat || '').trim();
       const errors = [];
@@ -49,6 +54,12 @@ class ProfileController {
         errors.push('username tidak boleh kosong');
       }
 
+      if (!email) {
+        errors.push('email tidak boleh kosong');
+      } else if (!isValidEmail(email)) {
+        errors.push('email tidak valid');
+      }
+
       if (errors.length > 0) {
         return R.badRequest(res, 'Validasi gagal', errors);
       }
@@ -56,6 +67,7 @@ class ProfileController {
       const result = await ProfileModel.updateProfile(idUser, {
         nama_lengkap: namaLengkap,
         username,
+        email,
         no_hp: noHp || null,
         alamat: alamat || null
       });
