@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const UserModel = require('../models/userModel');
+const UserLoginHistoryModel = require('../models/userLoginHistoryModel');
 const R = require('../utils/response');
 
 const ALLOWED_ROLES = new Set(['masyarakat', 'petugas', 'kepala_camat']);
@@ -136,6 +137,14 @@ class AuthController {
 
       const payload = { id_user: user.id_user, username: user.username, role: user.role };
       const accessToken = jwt.sign(payload, jwtConfig.secret, { expiresIn: jwtConfig.expiresIn });
+
+      const history = await UserLoginHistoryModel.createHistory({
+        id_user: user.id_user,
+        aktivitas: 'login'
+      });
+      if (!history.success) {
+        return R.serverError(res, 'Gagal menyimpan history login');
+      }
 
       const namaLengkap = (user.nama_lengkap || user.nama || '').trim();
 

@@ -5,6 +5,7 @@ const multer = require('multer');
 const router = express.Router();
 const auth = require('../middleware/auth');
 const ProfileController = require('../controllers/profileController');
+const UserLoginHistoryController = require('../controllers/userLoginHistoryController');
 const R = require('../utils/response');
 
 const avatarDir = path.join(process.cwd(), 'uploads', 'avatar');
@@ -49,5 +50,6 @@ function uploadAvatar(req, res, next) {
 router.get('/', auth, ProfileController.getProfile);
 router.put('/', auth, ProfileController.updateProfile);
 router.put('/avatar', auth, uploadAvatar, ProfileController.updateAvatar);
+router.get('/login-history', auth, UserLoginHistoryController.getLoginHistory);
 
 module.exports = router;
