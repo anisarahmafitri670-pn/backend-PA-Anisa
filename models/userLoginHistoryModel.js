@@ -19,7 +19,7 @@ class UserLoginHistoryModel {
       connection = await pool.getConnection();
       const query = `
         INSERT INTO user_login_history (id_user, aktivitas, waktu)
-        VALUES (?, ?, NOW())
+        VALUES (?, ?, DATE_ADD(UTC_TIMESTAMP(), INTERVAL 7 HOUR))
       `;
       const [result] = await connection.execute(query, [id_user, aktivitas]);
       return { success: true, id: result.insertId };
