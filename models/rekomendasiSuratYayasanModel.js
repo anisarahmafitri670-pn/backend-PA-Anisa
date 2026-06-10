@@ -1,36 +1,9 @@
-const mysql = require('mysql2/promise');
-require('dotenv').config();
-
+const db = require('../config/db');
 // Konfigurasi koneksi MySQL
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  port: Number(process.env.DB_PORT) || 3306,
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'sistem_pelayanan_terpadu',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
-
-// Test database connection on startup
-(async () => {
-  try {
-    const connection = await pool.getConnection();
-    console.log('✅ Database AlwaysData Connected');
-    connection.release();
-  } catch (error) {
-    console.error('❌ Database Connection Failed');
-    console.error(error);
-  }
-})();
-
 class Database {
   // Simpan pengajuan rekomendasi surat yayasan ke database
   static async savePengajuan(pengajuanData) {
-    let connection;
     try {
-      connection = await pool.getConnection();
 
       const query = `
         INSERT INTO rekomendasi_surat_yayasan
@@ -46,7 +19,7 @@ class Database {
         pengajuanData.alamat_lembaga
       ];
 
-      const [result] = await connection.execute(query, values);
+      const [result] = await db.execute(query, values);
 
       return {
         success: true,
@@ -58,16 +31,12 @@ class Database {
         success: false,
         error: error.message
       };
-    } finally {
-      if (connection) connection.release();
     }
   }
 
   // Update pengajuan rekomendasi surat yayasan
   static async updatePengajuan(idPengajuan, pengajuanData) {
-    let connection;
     try {
-      connection = await pool.getConnection();
 
       const query = `
         UPDATE rekomendasi_surat_yayasan
@@ -88,7 +57,7 @@ class Database {
         idPengajuan
       ];
 
-      const [result] = await connection.execute(query, values);
+      const [result] = await db.execute(query, values);
 
       return {
         success: true,
@@ -99,23 +68,19 @@ class Database {
         success: false,
         error: error.message
       };
-    } finally {
-      if (connection) connection.release();
     }
   }
 
   // Hapus pengajuan rekomendasi surat yayasan
   static async deletePengajuan(idPengajuan) {
-    let connection;
     try {
-      connection = await pool.getConnection();
 
       const query = `
         DELETE FROM rekomendasi_surat_yayasan
         WHERE id_pengajuan = ?
       `;
 
-      const [result] = await connection.execute(query, [idPengajuan]);
+      const [result] = await db.execute(query, [idPengajuan]);
 
       return {
         success: true,
@@ -126,23 +91,19 @@ class Database {
         success: false,
         error: error.message
       };
-    } finally {
-      if (connection) connection.release();
     }
   }
 
   // Ambil semua pengajuan rekomendasi surat yayasan
   static async getAllPengajuan() {
-    let connection;
     try {
-      connection = await pool.getConnection();
 
       const query = `
         SELECT * FROM rekomendasi_surat_yayasan
         ORDER BY created_at DESC
       `;
 
-      const [rows] = await connection.execute(query);
+      const [rows] = await db.execute(query);
 
       return {
         success: true,
@@ -153,23 +114,19 @@ class Database {
         success: false,
         error: error.message
       };
-    } finally {
-      if (connection) connection.release();
     }
   }
 
   // Ambil pengajuan rekomendasi surat yayasan berdasarkan ID
   static async getPengajuanById(idPengajuan) {
-    let connection;
     try {
-      connection = await pool.getConnection();
 
       const query = `
         SELECT * FROM rekomendasi_surat_yayasan
         WHERE id_pengajuan = ?
       `;
 
-      const [rows] = await connection.execute(query, [idPengajuan]);
+      const [rows] = await db.execute(query, [idPengajuan]);
 
       return {
         success: true,
@@ -180,8 +137,6 @@ class Database {
         success: false,
         error: error.message
       };
-    } finally {
-      if (connection) connection.release();
     }
   }
 }

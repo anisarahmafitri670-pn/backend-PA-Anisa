@@ -1,79 +1,52 @@
-const mysql = require('mysql2/promise');
-require('dotenv').config();
-
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  port: Number(process.env.DB_PORT) || 3306,
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'sistem_pelayanan_terpadu',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-});
-
+const db = require('../config/db');
 class UserModel {
   static async findByUsername(username) {
-    let connection;
     try {
-      connection = await pool.getConnection();
       const query = `
         SELECT *
         FROM users
         WHERE username = ?
         LIMIT 1
       `;
-      const [rows] = await connection.execute(query, [username]);
+      const [rows] = await db.execute(query, [username]);
       return { success: true, data: rows[0] || null };
     } catch (error) {
       return { success: false, error: error.message };
-    } finally {
-      if (connection) connection.release();
     }
   }
 
   static async findByEmail(email) {
-    let connection;
     try {
-      connection = await pool.getConnection();
       const query = `
         SELECT *
         FROM users
         WHERE email = ?
         LIMIT 1
       `;
-      const [rows] = await connection.execute(query, [email]);
+      const [rows] = await db.execute(query, [email]);
       return { success: true, data: rows[0] || null };
     } catch (error) {
       return { success: false, error: error.message };
-    } finally {
-      if (connection) connection.release();
     }
   }
 
   static async findById(idUser) {
-    let connection;
     try {
-      connection = await pool.getConnection();
       const query = `
         SELECT *
         FROM users
         WHERE id_user = ?
         LIMIT 1
       `;
-      const [rows] = await connection.execute(query, [idUser]);
+      const [rows] = await db.execute(query, [idUser]);
       return { success: true, data: rows[0] || null };
     } catch (error) {
       return { success: false, error: error.message };
-    } finally {
-      if (connection) connection.release();
     }
   }
 
   static async createUser({ nama, username, email, passwordHash, role }) {
-    let connection;
     try {
-      connection = await pool.getConnection();
 
       const values = [nama, username, email, passwordHash, role];
 
@@ -84,7 +57,7 @@ class UserModel {
           INSERT INTO users (nama_lengkap, username, email, password, role)
           VALUES (?, ?, ?, ?, ?)
         `;
-        [result] = await connection.execute(queryNamaLengkap, values);
+        [result] = await db.execute(queryNamaLengkap, values);
       } catch (error) {
         if (!String(error.message || '').includes("Unknown column 'nama_lengkap'")) {
           throw error;
@@ -94,31 +67,25 @@ class UserModel {
           INSERT INTO users (nama, username, email, password, role)
           VALUES (?, ?, ?, ?, ?)
         `;
-        [result] = await connection.execute(queryNama, values);
+        [result] = await db.execute(queryNama, values);
       }
 
       return { success: true, id: result.insertId };
     } catch (error) {
       return { success: false, error: error.message };
-    } finally {
-      if (connection) connection.release();
     }
   }
 
   static async deleteUser(idUser) {
-    let connection;
     try {
-      connection = await pool.getConnection();
       const query = `
         DELETE FROM users
         WHERE id_user = ?
       `;
-      const [result] = await connection.execute(query, [idUser]);
+      const [result] = await db.execute(query, [idUser]);
       return { success: true, affectedRows: result.affectedRows };
     } catch (error) {
       return { success: false, error: error.message };
-    } finally {
-      if (connection) connection.release();
     }
   }
 }
