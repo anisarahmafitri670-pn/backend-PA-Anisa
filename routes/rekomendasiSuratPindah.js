@@ -4,6 +4,7 @@ const RekomendasiSuratPindahController = require('../controllers/rekomendasiSura
 const auth = require('../middleware/auth');
 const { upload } = require('../middleware/uploadSuratPindah');
 const { DokumenRekomendasiSuratPindahController } = require('../controllers/dokumenRekomendasiSuratPindahController');
+const { registerPetugasRoutes } = require('./petugasRoutes');
 
 // CRUD endpoint untuk rekomendasi surat pindah
 router.post('/api/rekomendasi_surat_pindah', auth, RekomendasiSuratPindahController.buatPengajuan);
@@ -32,5 +33,7 @@ router.delete(
   auth,
   DokumenRekomendasiSuratPindahController.hapusDokumen
 );
+
+registerPetugasRoutes(router, 'rekomendasi_surat_pindah');
 
 module.exports = router;

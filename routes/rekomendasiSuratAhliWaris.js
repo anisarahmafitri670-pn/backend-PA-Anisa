@@ -4,6 +4,7 @@ const RekomendasiSuratAhliWarisController = require('../controllers/rekomendasiS
 const auth = require('../middleware/auth');
 const { upload } = require('../middleware/uploadSuratAhliWaris');
 const { DokumenRekomendasiSuratAhliWarisController } = require('../controllers/dokumenRekomendasiSuratAhliWarisController');
+const { registerPetugasRoutes } = require('./petugasRoutes');
 
 // CRUD endpoint untuk rekomendasi surat ahli waris
 router.post('/api/rekomendasi_surat_ahli_waris', auth, RekomendasiSuratAhliWarisController.buatPengajuan);
@@ -32,5 +33,7 @@ router.delete(
   auth,
   DokumenRekomendasiSuratAhliWarisController.hapusDokumen
 );
+
+registerPetugasRoutes(router, 'rekomendasi_surat_ahli_waris');
 
 module.exports = router;

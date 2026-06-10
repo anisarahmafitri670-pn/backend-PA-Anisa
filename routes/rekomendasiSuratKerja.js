@@ -4,6 +4,7 @@ const RekomendasiSuratKerjaController = require('../controllers/rekomendasiSurat
 const auth = require('../middleware/auth');
 const { upload } = require('../middleware/uploadSuratKerja');
 const { DokumenRekomendasiSuratKerjaController } = require('../controllers/dokumenRekomendasiSuratKerjaController');
+const { registerPetugasRoutes } = require('./petugasRoutes');
 
 // CRUD endpoint untuk rekomendasi surat kerja
 router.post('/api/rekomendasi_surat_kerja', auth, RekomendasiSuratKerjaController.buatPengajuan);
@@ -32,5 +33,7 @@ router.delete(
   auth,
   DokumenRekomendasiSuratKerjaController.hapusDokumen
 );
+
+registerPetugasRoutes(router, 'rekomendasi_surat_kerja');
 
 module.exports = router;

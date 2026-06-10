@@ -4,6 +4,7 @@ const RekomendasiAktaKelahiranController = require('../controllers/rekomendasiAk
 const auth = require('../middleware/auth');
 const { upload } = require('../middleware/uploadAktaKelahiran');
 const { DokumenRekomendasiAktaKelahiranController } = require('../controllers/dokumenRekomendasiAktaKelahiranController');
+const { registerPetugasRoutes } = require('./petugasRoutes');
 
 // CRUD endpoint untuk rekomendasi akta kelahiran
 router.post('/api/rekomendasi_akta_kelahiran', auth, RekomendasiAktaKelahiranController.buatPengajuan);
@@ -32,5 +33,7 @@ router.delete(
   auth,
   DokumenRekomendasiAktaKelahiranController.hapusDokumen
 );
+
+registerPetugasRoutes(router, 'rekomendasi_akta_kelahiran');
 
 module.exports = router;

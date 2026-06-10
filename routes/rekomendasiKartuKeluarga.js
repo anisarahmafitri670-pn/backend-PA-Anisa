@@ -4,6 +4,7 @@ const RekomendasiKartuKeluargaController = require('../controllers/rekomendasiKa
 const auth = require('../middleware/auth');
 const { upload } = require('../middleware/uploadKartuKeluarga');
 const { DokumenRekomendasiKartuKeluargaController } = require('../controllers/dokumenRekomendasiKartuKeluargaController');
+const { registerPetugasRoutes } = require('./petugasRoutes');
 
 // CRUD endpoint untuk rekomendasi kartu keluarga
 router.post('/api/rekomendasi_kartu_keluarga', auth, RekomendasiKartuKeluargaController.buatPengajuan);
@@ -32,5 +33,7 @@ router.delete(
   auth,
   DokumenRekomendasiKartuKeluargaController.hapusDokumen
 );
+
+registerPetugasRoutes(router, 'rekomendasi_kartu_keluarga');
 
 module.exports = router;

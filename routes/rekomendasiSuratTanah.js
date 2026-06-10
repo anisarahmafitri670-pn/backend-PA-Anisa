@@ -4,6 +4,7 @@ const RekomendasiSuratTanahController = require('../controllers/rekomendasiSurat
 const auth = require('../middleware/auth');
 const { upload } = require('../middleware/uploadSuratTanah');
 const { DokumenRekomendasiSuratTanahController } = require('../controllers/dokumenRekomendasiSuratTanahController');
+const { registerPetugasRoutes } = require('./petugasRoutes');
 
 // CRUD endpoint untuk rekomendasi surat tanah
 router.post('/api/rekomendasi_surat_tanah', auth, RekomendasiSuratTanahController.buatPengajuan);
@@ -32,5 +33,7 @@ router.delete(
   auth,
   DokumenRekomendasiSuratTanahController.hapusDokumen
 );
+
+registerPetugasRoutes(router, 'rekomendasi_surat_tanah');
 
 module.exports = router;

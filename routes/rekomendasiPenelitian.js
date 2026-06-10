@@ -4,6 +4,7 @@ const RekomendasiPenelitianController = require('../controllers/rekomendasiPenel
 const auth = require('../middleware/auth');
 const { upload } = require('../middleware/uploadPenelitian');
 const { DokumenRekomendasiPenelitianController } = require('../controllers/dokumenRekomendasiPenelitianController');
+const { registerPetugasRoutes } = require('./petugasRoutes');
 
 // CRUD endpoint untuk rekomendasi penelitian
 router.post('/api/rekomendasi_penelitian', auth, RekomendasiPenelitianController.buatRekomendasi);
@@ -32,5 +33,7 @@ router.delete(
   auth,
   DokumenRekomendasiPenelitianController.hapusDokumen
 );
+
+registerPetugasRoutes(router, 'rekomendasi_penelitian');
 
 module.exports = router;

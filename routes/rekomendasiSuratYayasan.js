@@ -4,6 +4,7 @@ const RekomendasiSuratYayasanController = require('../controllers/rekomendasiSur
 const auth = require('../middleware/auth');
 const { upload } = require('../middleware/uploadSuratYayasan');
 const { DokumenRekomendasiSuratYayasanController } = require('../controllers/dokumenRekomendasiSuratYayasanController');
+const { registerPetugasRoutes } = require('./petugasRoutes');
 
 // CRUD endpoint untuk rekomendasi surat yayasan
 router.post('/api/rekomendasi_surat_yayasan', auth, RekomendasiSuratYayasanController.buatPengajuan);
@@ -32,5 +33,7 @@ router.delete(
   auth,
   DokumenRekomendasiSuratYayasanController.hapusDokumen
 );
+
+registerPetugasRoutes(router, 'rekomendasi_surat_yayasan');
 
 module.exports = router;
