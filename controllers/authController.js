@@ -11,14 +11,11 @@ function normalizeUsername(username) {
 }
 
 function isValidUsername(username) {
-  // minimal 8 karakter, harus ada huruf kapital dan angka
-  // allowed: huruf (besar/kecil), angka, underscore, titik
-  return /^(?=.*[A-Z])(?=.*\d)[A-Za-z\d_.]{8,30}$/.test(username);
+  return typeof username === 'string' && username.trim().length >= 4;
 }
 
 function isValidPassword(password) {
-  // minimal 8 karakter, harus ada huruf kapital dan angka, tidak boleh mengandung spasi
-  return /^(?=.*[A-Z])(?=.*\d)[^\s]{8,}$/.test(password);
+  return typeof password === 'string' && password.length >= 4;
 }
 
 function isValidEmail(email) {
@@ -52,7 +49,7 @@ class AuthController {
       }
 
       if (!username || !isValidUsername(username)) {
-        return R.badRequest(res, 'username tidak valid (min 8 karakter, harus ada huruf kapital dan angka)');
+        return R.badRequest(res, 'Username minimal 4 karakter');
       }
 
       if (!email || !isValidEmail(email)) {
@@ -60,11 +57,11 @@ class AuthController {
       }
 
       if (!password) {
-        return R.badRequest(res, 'password tidak boleh kosong');
+        return R.badRequest(res, 'Password tidak boleh kosong');
       }
 
       if (!isValidPassword(password)) {
-        return R.badRequest(res, 'password tidak valid (min 8 karakter, harus ada huruf kapital dan angka)');
+        return R.badRequest(res, 'Password minimal 4 karakter');
       }
 
       const existingUsername = await UserModel.findByUsername(username);
@@ -103,11 +100,11 @@ class AuthController {
       const password = req.body.password || '';
 
       if (!username || !isValidUsername(username)) {
-        return R.badRequest(res, 'username tidak valid (min 8 karakter, harus ada huruf kapital dan angka)');
+        return R.badRequest(res, 'Username minimal 4 karakter');
       }
 
       if (!password || !isValidPassword(password)) {
-        return R.badRequest(res, 'password tidak valid (min 8 karakter, harus ada huruf kapital dan angka)');
+        return R.badRequest(res, 'Password minimal 4 karakter');
       }
 
       const jwtConfig = getJwtConfig();
