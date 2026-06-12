@@ -43,25 +43,30 @@ class AuthController {
       const username = normalizeUsername(req.body.username);
       const email = (req.body.email || '').trim().toLowerCase();
       const password = req.body.password || '';
+      const errors = [];
 
       if (!namaLengkap) {
-        return R.badRequest(res, 'nama_lengkap tidak boleh kosong');
+        errors.push('nama_lengkap tidak boleh kosong');
       }
 
       if (!username || !isValidUsername(username)) {
-        return R.badRequest(res, 'Username minimal 4 karakter');
+        errors.push('Username minimal 4 karakter');
       }
 
       if (!email || !isValidEmail(email)) {
-        return R.badRequest(res, 'email tidak valid');
+        errors.push('email tidak valid');
       }
 
       if (!password) {
-        return R.badRequest(res, 'Password tidak boleh kosong');
+        errors.push('Password tidak boleh kosong');
       }
 
       if (!isValidPassword(password)) {
-        return R.badRequest(res, 'Password minimal 4 karakter');
+        errors.push('Password minimal 4 karakter');
+      }
+
+      if (errors.length > 0) {
+        return R.badRequest(res, 'Validasi gagal', errors);
       }
 
       const existingUsername = await UserModel.findByUsername(username);
@@ -98,13 +103,18 @@ class AuthController {
     try {
       const username = normalizeUsername(req.body.username);
       const password = req.body.password || '';
+      const errors = [];
 
       if (!username || !isValidUsername(username)) {
-        return R.badRequest(res, 'Username minimal 4 karakter');
+        errors.push('Username minimal 4 karakter');
       }
 
       if (!password || !isValidPassword(password)) {
-        return R.badRequest(res, 'Password minimal 4 karakter');
+        errors.push('Password minimal 4 karakter');
+      }
+
+      if (errors.length > 0) {
+        return R.badRequest(res, 'Validasi gagal', errors);
       }
 
       const jwtConfig = getJwtConfig();
