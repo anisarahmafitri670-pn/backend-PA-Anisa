@@ -42,6 +42,7 @@ const rekomendasiSuratKerjaRoute = require('./routes/rekomendasiSuratKerja');
 const rekomendasiSuratTanahRoute = require('./routes/rekomendasiSuratTanah');
 const rekomendasiSuratAhliWarisRoute = require('./routes/rekomendasiSuratAhliWaris');
 const rekomendasiSuratYayasanRoute = require('./routes/rekomendasiSuratYayasan');
+const galeriRoute = require('./routes/galeri');
 
 // Gunakan routes
 app.use(rekomendasiPenelitianRoute);
@@ -55,6 +56,7 @@ app.use(rekomendasiSuratKerjaRoute);
 app.use(rekomendasiSuratTanahRoute);
 app.use(rekomendasiSuratAhliWarisRoute);
 app.use(rekomendasiSuratYayasanRoute);
+app.use(galeriRoute);
 
 // Root endpoint
 app.get('/', (req, res) => {
