@@ -126,19 +126,6 @@ class VerifikasiPetugasController {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
 
-      const pengajuan = await VerifikasiPetugasModel.findById(req.layanan, idPengajuan);
-      if (pengajuan.success && !pengajuan.data) {
-        return R.notFound(res, 'Pengajuan tidak ditemukan');
-      }
-
-      if (!pengajuan.success) {
-        return R.serverError(res, 'Gagal mengambil data pengajuan');
-      }
-
-      if (!pengajuan.data.file_surat_hasil) {
-        return R.badRequest(res, 'Surat hasil wajib diupload sebelum pengajuan selesai');
-      }
-
       const result = await VerifikasiPetugasModel.selesai(req.layanan, idPengajuan);
       if (result.success && result.affectedRows > 0) {
         return R.ok(res, 'Pengajuan selesai', null);
