@@ -1,6 +1,14 @@
 const RekomendasiPenelitianModel = require('../models/rekomendasiPenelitianModel');
 const R = require('../utils/response');
 
+function getTokenUserId(req) {
+  return req.user && req.user.id_user ? Number(req.user.id_user) : null;
+}
+
+function isPetugas(req) {
+  return req.user && req.user.role === 'petugas';
+}
+
 class RekomendasiPenelitianController {
   // Validasi field wajib
   static validateInput(data) {
@@ -42,6 +50,11 @@ class RekomendasiPenelitianController {
         lokasi_penelitian,
         waktu_penelitian
       } = req.body;
+      const idUser = getTokenUserId(req);
+
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
 
       // Validasi input
       const validation = RekomendasiPenelitianController.validateInput(req.body);
@@ -50,6 +63,7 @@ class RekomendasiPenelitianController {
       }
 
       const rekomendasiData = {
+        id_user: idUser,
         nama_peneliti: nama_peneliti.trim(),
         instansi: instansi.trim(),
         topik_penelitian: topik_penelitian.trim(),
@@ -62,6 +76,7 @@ class RekomendasiPenelitianController {
       if (result.success) {
         return R.created(res, 'Rekomendasi penelitian berhasil dibuat', {
           id_pengajuan: result.id,
+          id_user: idUser,
           ...rekomendasiData
         });
       }
@@ -75,7 +90,12 @@ class RekomendasiPenelitianController {
   //Ambil Semua data
   static async getAllRekomendasi(req, res) {
     try {
-      const result = await RekomendasiPenelitianModel.getAllRekomendasi();
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiPenelitianModel.getAllRekomendasi(isPetugas(req) ? null : idUser);
       if (result.success) {
         return R.ok(res, 'Berhasil mengambil data rekomendasi penelitian', result.data);
       }
@@ -94,7 +114,12 @@ class RekomendasiPenelitianController {
         return R.badRequest(res, 'ID rekomendasi tidak valid');
       }
 
-      const result = await RekomendasiPenelitianModel.getRekomendasiById(id);
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiPenelitianModel.getRekomendasiById(id, isPetugas(req) ? null : idUser);
       if (result.success && result.data) {
         return R.ok(res, 'Berhasil mengambil data rekomendasi penelitian', result.data);
       }
@@ -128,7 +153,12 @@ class RekomendasiPenelitianController {
         topik_penelitian,
         lokasi_penelitian,
         waktu_penelitian
-      } = req.body;
+       } = req.body;
+      const idUser = getTokenUserId(req);
+
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
 
       const rekomendasiData = {
         nama_peneliti: nama_peneliti.trim(),
@@ -138,7 +168,7 @@ class RekomendasiPenelitianController {
         waktu_penelitian: waktu_penelitian.trim()
       };
 
-      const result = await RekomendasiPenelitianModel.updateRekomendasi(id, rekomendasiData);
+      const result = await RekomendasiPenelitianModel.updateRekomendasi(id, rekomendasiData, isPetugas(req) ? null : idUser);
 
       if (result.success && result.affectedRows > 0) {
         return R.ok(res, 'Rekomendasi penelitian berhasil diperbarui', null);
@@ -162,7 +192,12 @@ class RekomendasiPenelitianController {
         return R.badRequest(res, 'ID rekomendasi tidak valid');
       }
 
-       const result = await RekomendasiPenelitianModel.deleteRekomendasi(id);
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+       const result = await RekomendasiPenelitianModel.deleteRekomendasi(id, isPetugas(req) ? null : idUser);
 
       if (result.success && result.affectedRows > 0) {
         return R.ok(res, 'Rekomendasi penelitian berhasil dihapus', null);

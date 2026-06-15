@@ -5,6 +5,14 @@ function normalizeDigits(value) {
   return String(value || '').replace(/\D/g, '');
 }
 
+function getTokenUserId(req) {
+  return req.user && req.user.id_user ? Number(req.user.id_user) : null;
+}
+
+function isPetugas(req) {
+  return req.user && req.user.role === 'petugas';
+}
+
 class RekomendasiSuratAhliWarisController {
   // Validasi field wajib
   static validateInput(data) {
@@ -65,6 +73,11 @@ class RekomendasiSuratAhliWarisController {
         alamat_pemohon,
         no_hp
       } = req.body;
+      const idUser = getTokenUserId(req);
+
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
 
       const validation = RekomendasiSuratAhliWarisController.validateInput(req.body);
       if (!validation.isValid) {
@@ -72,6 +85,7 @@ class RekomendasiSuratAhliWarisController {
       }
 
       const pengajuanData = {
+        id_user: idUser,
         nama_pewaris: nama_pewaris.trim(),
         nik_pewaris: normalizeDigits(nik_pewaris),
         alamat_pewaris: alamat_pewaris.trim(),
@@ -86,6 +100,7 @@ class RekomendasiSuratAhliWarisController {
       if (result.success) {
         return R.created(res, 'Pengajuan rekomendasi surat ahli waris berhasil dibuat', {
           id_pengajuan: result.id,
+          id_user: idUser,
           status: 'Menunggu verifikasi',
           ...pengajuanData
         });
@@ -100,7 +115,12 @@ class RekomendasiSuratAhliWarisController {
   // Ambil semua pengajuan
   static async getAllPengajuan(req, res) {
     try {
-      const result = await RekomendasiSuratAhliWarisModel.getAllPengajuan();
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiSuratAhliWarisModel.getAllPengajuan(isPetugas(req) ? null : idUser);
       if (result.success) {
         return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat ahli waris', result.data);
       }
@@ -119,7 +139,12 @@ class RekomendasiSuratAhliWarisController {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
 
-      const result = await RekomendasiSuratAhliWarisModel.getPengajuanById(id);
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiSuratAhliWarisModel.getPengajuanById(id, isPetugas(req) ? null : idUser);
       if (result.success && result.data) {
         return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat ahli waris', result.data);
       }
@@ -156,6 +181,11 @@ class RekomendasiSuratAhliWarisController {
         alamat_pemohon,
         no_hp
       } = req.body;
+      const idUser = getTokenUserId(req);
+
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
 
       const pengajuanData = {
         nama_pewaris: nama_pewaris.trim(),
@@ -167,7 +197,7 @@ class RekomendasiSuratAhliWarisController {
         no_hp: normalizeDigits(no_hp)
       };
 
-      const result = await RekomendasiSuratAhliWarisModel.updatePengajuan(id, pengajuanData);
+      const result = await RekomendasiSuratAhliWarisModel.updatePengajuan(id, pengajuanData, isPetugas(req) ? null : idUser);
 
       if (result.success && result.affectedRows > 0) {
         return R.ok(res, 'Pengajuan rekomendasi surat ahli waris berhasil diperbarui', null);
@@ -191,7 +221,12 @@ class RekomendasiSuratAhliWarisController {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
 
-      const result = await RekomendasiSuratAhliWarisModel.deletePengajuan(id);
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiSuratAhliWarisModel.deletePengajuan(id, isPetugas(req) ? null : idUser);
 
       if (result.success && result.affectedRows > 0) {
         return R.ok(res, 'Pengajuan rekomendasi surat ahli waris berhasil dihapus', null);

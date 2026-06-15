@@ -5,6 +5,14 @@ function normalizeDigits(value) {
   return String(value || '').replace(/\D/g, '');
 }
 
+function getTokenUserId(req) {
+  return req.user && req.user.id_user ? Number(req.user.id_user) : null;
+}
+
+function isPetugas(req) {
+  return req.user && req.user.role === 'petugas';
+}
+
 class RekomendasiSuratTanahController {
   // Validasi field wajib
   static validateInput(data) {
@@ -42,6 +50,11 @@ class RekomendasiSuratTanahController {
   static async buatPengajuan(req, res) {
     try {
       const { nama_pemohon, alamat, nik, no_hp } = req.body;
+      const idUser = getTokenUserId(req);
+
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
 
       // Validasi input
       const validation = RekomendasiSuratTanahController.validateInput(req.body);
@@ -50,6 +63,7 @@ class RekomendasiSuratTanahController {
       }
 
       const pengajuanData = {
+        id_user: idUser,
         nama_pemohon: nama_pemohon.trim(),
         alamat: alamat.trim(),
         nik: normalizeDigits(nik),
@@ -61,6 +75,7 @@ class RekomendasiSuratTanahController {
       if (result.success) {
         return R.created(res, 'Pengajuan rekomendasi surat tanah berhasil dibuat', {
           id_pengajuan: result.id,
+          id_user: idUser,
           status: 'Menunggu verifikasi',
           ...pengajuanData
         });
@@ -75,7 +90,12 @@ class RekomendasiSuratTanahController {
   // Ambil semua pengajuan
   static async getAllPengajuan(req, res) {
     try {
-      const result = await RekomendasiSuratTanahModel.getAllPengajuan();
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiSuratTanahModel.getAllPengajuan(isPetugas(req) ? null : idUser);
       if (result.success) {
         return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat tanah', result.data);
       }
@@ -94,7 +114,12 @@ class RekomendasiSuratTanahController {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
 
-      const result = await RekomendasiSuratTanahModel.getPengajuanById(id);
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiSuratTanahModel.getPengajuanById(id, isPetugas(req) ? null : idUser);
       if (result.success && result.data) {
         return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat tanah', result.data);
       }
@@ -123,6 +148,11 @@ class RekomendasiSuratTanahController {
       }
 
       const { nama_pemohon, alamat, nik, no_hp } = req.body;
+      const idUser = getTokenUserId(req);
+
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
 
       const pengajuanData = {
         nama_pemohon: nama_pemohon.trim(),
@@ -131,7 +161,7 @@ class RekomendasiSuratTanahController {
         no_hp: normalizeDigits(no_hp)
       };
 
-      const result = await RekomendasiSuratTanahModel.updatePengajuan(id, pengajuanData);
+      const result = await RekomendasiSuratTanahModel.updatePengajuan(id, pengajuanData, isPetugas(req) ? null : idUser);
 
       if (result.success && result.affectedRows > 0) {
         return R.ok(res, 'Pengajuan rekomendasi surat tanah berhasil diperbarui', null);
@@ -155,7 +185,12 @@ class RekomendasiSuratTanahController {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
 
-      const result = await RekomendasiSuratTanahModel.deletePengajuan(id);
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiSuratTanahModel.deletePengajuan(id, isPetugas(req) ? null : idUser);
 
       if (result.success && result.affectedRows > 0) {
         return R.ok(res, 'Pengajuan rekomendasi surat tanah berhasil dihapus', null);

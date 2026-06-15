@@ -7,11 +7,12 @@ class Database {
 
       const query = `
         INSERT INTO rekomendasi_surat_tanah
-        (nama_pemohon, alamat, nik, no_hp)
-        VALUES (?, ?, ?, ?)
+        (id_user, nama_pemohon, alamat, nik, no_hp)
+        VALUES (?, ?, ?, ?, ?)
       `;
 
       const values = [
+        pengajuanData.id_user,
         pengajuanData.nama_pemohon,
         pengajuanData.alamat,
         pengajuanData.nik,
@@ -34,8 +35,9 @@ class Database {
   }
 
   // Update pengajuan rekomendasi surat tanah
-  static async updatePengajuan(idPengajuan, pengajuanData) {
+  static async updatePengajuan(idPengajuan, pengajuanData, idUser = null) {
     try {
+      const whereClause = idUser ? 'WHERE id_pengajuan = ? AND id_user = ?' : 'WHERE id_pengajuan = ?';
 
       const query = `
         UPDATE rekomendasi_surat_tanah
@@ -43,7 +45,7 @@ class Database {
             alamat = ?,
             nik = ?,
             no_hp = ?
-        WHERE id_pengajuan = ?
+        ${whereClause}
       `;
 
       const values = [
@@ -53,6 +55,10 @@ class Database {
         pengajuanData.no_hp,
         idPengajuan
       ];
+
+      if (idUser) {
+        values.push(idUser);
+      }
 
       const [result] = await db.execute(query, values);
 
@@ -69,15 +75,21 @@ class Database {
   }
 
   // Hapus pengajuan rekomendasi surat tanah
-  static async deletePengajuan(idPengajuan) {
+  static async deletePengajuan(idPengajuan, idUser = null) {
     try {
+      const whereClause = idUser ? 'WHERE id_pengajuan = ? AND id_user = ?' : 'WHERE id_pengajuan = ?';
 
       const query = `
         DELETE FROM rekomendasi_surat_tanah
-        WHERE id_pengajuan = ?
+        ${whereClause}
       `;
 
-      const [result] = await db.execute(query, [idPengajuan]);
+      const values = [idPengajuan];
+      if (idUser) {
+        values.push(idUser);
+      }
+
+      const [result] = await db.execute(query, values);
 
       return {
         success: true,
@@ -92,15 +104,18 @@ class Database {
   }
 
   // Ambil semua pengajuan rekomendasi surat tanah
-  static async getAllPengajuan() {
+  static async getAllPengajuan(idUser = null) {
     try {
+      const whereClause = idUser ? 'WHERE id_user = ?' : '';
 
       const query = `
         SELECT * FROM rekomendasi_surat_tanah
+        ${whereClause}
         ORDER BY created_at DESC
       `;
 
-      const [rows] = await db.execute(query);
+      const values = idUser ? [idUser] : [];
+      const [rows] = await db.execute(query, values);
 
       return {
         success: true,
@@ -115,15 +130,21 @@ class Database {
   }
 
   // Ambil pengajuan rekomendasi surat tanah berdasarkan ID
-  static async getPengajuanById(idPengajuan) {
+  static async getPengajuanById(idPengajuan, idUser = null) {
     try {
+      const whereClause = idUser ? 'WHERE id_pengajuan = ? AND id_user = ?' : 'WHERE id_pengajuan = ?';
 
       const query = `
         SELECT * FROM rekomendasi_surat_tanah
-        WHERE id_pengajuan = ?
+        ${whereClause}
       `;
 
-      const [rows] = await db.execute(query, [idPengajuan]);
+      const values = [idPengajuan];
+      if (idUser) {
+        values.push(idUser);
+      }
+
+      const [rows] = await db.execute(query, values);
 
       return {
         success: true,

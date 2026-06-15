@@ -7,11 +7,12 @@ class Database {
 
       const query = `
         INSERT INTO rekomendasi_surat_yayasan
-        (nama_pemohon, nik, jabatan, nama_lembaga, alamat_lembaga)
-        VALUES (?, ?, ?, ?, ?)
+        (id_user, nama_pemohon, nik, jabatan, nama_lembaga, alamat_lembaga)
+        VALUES (?, ?, ?, ?, ?, ?)
       `;
 
       const values = [
+        pengajuanData.id_user,
         pengajuanData.nama_pemohon,
         pengajuanData.nik,
         pengajuanData.jabatan,
@@ -35,8 +36,9 @@ class Database {
   }
 
   // Update pengajuan rekomendasi surat yayasan
-  static async updatePengajuan(idPengajuan, pengajuanData) {
+  static async updatePengajuan(idPengajuan, pengajuanData, idUser = null) {
     try {
+      const whereClause = idUser ? 'WHERE id_pengajuan = ? AND id_user = ?' : 'WHERE id_pengajuan = ?';
 
       const query = `
         UPDATE rekomendasi_surat_yayasan
@@ -45,7 +47,7 @@ class Database {
             jabatan = ?,
             nama_lembaga = ?,
             alamat_lembaga = ?
-        WHERE id_pengajuan = ?
+        ${whereClause}
       `;
 
       const values = [
@@ -56,6 +58,10 @@ class Database {
         pengajuanData.alamat_lembaga,
         idPengajuan
       ];
+
+      if (idUser) {
+        values.push(idUser);
+      }
 
       const [result] = await db.execute(query, values);
 
@@ -72,15 +78,21 @@ class Database {
   }
 
   // Hapus pengajuan rekomendasi surat yayasan
-  static async deletePengajuan(idPengajuan) {
+  static async deletePengajuan(idPengajuan, idUser = null) {
     try {
+      const whereClause = idUser ? 'WHERE id_pengajuan = ? AND id_user = ?' : 'WHERE id_pengajuan = ?';
 
       const query = `
         DELETE FROM rekomendasi_surat_yayasan
-        WHERE id_pengajuan = ?
+        ${whereClause}
       `;
 
-      const [result] = await db.execute(query, [idPengajuan]);
+      const values = [idPengajuan];
+      if (idUser) {
+        values.push(idUser);
+      }
+
+      const [result] = await db.execute(query, values);
 
       return {
         success: true,
@@ -95,15 +107,18 @@ class Database {
   }
 
   // Ambil semua pengajuan rekomendasi surat yayasan
-  static async getAllPengajuan() {
+  static async getAllPengajuan(idUser = null) {
     try {
+      const whereClause = idUser ? 'WHERE id_user = ?' : '';
 
       const query = `
         SELECT * FROM rekomendasi_surat_yayasan
+        ${whereClause}
         ORDER BY created_at DESC
       `;
 
-      const [rows] = await db.execute(query);
+      const values = idUser ? [idUser] : [];
+      const [rows] = await db.execute(query, values);
 
       return {
         success: true,
@@ -118,15 +133,21 @@ class Database {
   }
 
   // Ambil pengajuan rekomendasi surat yayasan berdasarkan ID
-  static async getPengajuanById(idPengajuan) {
+  static async getPengajuanById(idPengajuan, idUser = null) {
     try {
+      const whereClause = idUser ? 'WHERE id_pengajuan = ? AND id_user = ?' : 'WHERE id_pengajuan = ?';
 
       const query = `
         SELECT * FROM rekomendasi_surat_yayasan
-        WHERE id_pengajuan = ?
+        ${whereClause}
       `;
 
-      const [rows] = await db.execute(query, [idPengajuan]);
+      const values = [idPengajuan];
+      if (idUser) {
+        values.push(idUser);
+      }
+
+      const [rows] = await db.execute(query, values);
 
       return {
         success: true,

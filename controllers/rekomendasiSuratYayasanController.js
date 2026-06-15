@@ -5,6 +5,14 @@ function normalizeDigits(value) {
   return String(value || '').replace(/\D/g, '');
 }
 
+function getTokenUserId(req) {
+  return req.user && req.user.id_user ? Number(req.user.id_user) : null;
+}
+
+function isPetugas(req) {
+  return req.user && req.user.role === 'petugas';
+}
+
 class RekomendasiSuratYayasanController {
   // Validasi field wajib
   static validateInput(data) {
@@ -43,6 +51,11 @@ class RekomendasiSuratYayasanController {
   static async buatPengajuan(req, res) {
     try {
       const { nama_pemohon, nik, jabatan, nama_lembaga, alamat_lembaga } = req.body;
+      const idUser = getTokenUserId(req);
+
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
 
       const validation = RekomendasiSuratYayasanController.validateInput(req.body);
       if (!validation.isValid) {
@@ -50,6 +63,7 @@ class RekomendasiSuratYayasanController {
       }
 
       const pengajuanData = {
+        id_user: idUser,
         nama_pemohon: nama_pemohon.trim(),
         nik: normalizeDigits(nik),
         jabatan: jabatan.trim(),
@@ -62,6 +76,7 @@ class RekomendasiSuratYayasanController {
       if (result.success) {
         return R.created(res, 'Pengajuan rekomendasi surat yayasan berhasil dibuat', {
           id_pengajuan: result.id,
+          id_user: idUser,
           status: 'Menunggu verifikasi',
           ...pengajuanData
         });
@@ -76,7 +91,12 @@ class RekomendasiSuratYayasanController {
   // Ambil semua pengajuan
   static async getAllPengajuan(req, res) {
     try {
-      const result = await RekomendasiSuratYayasanModel.getAllPengajuan();
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiSuratYayasanModel.getAllPengajuan(isPetugas(req) ? null : idUser);
       if (result.success) {
         return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat yayasan', result.data);
       }
@@ -95,7 +115,12 @@ class RekomendasiSuratYayasanController {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
 
-      const result = await RekomendasiSuratYayasanModel.getPengajuanById(id);
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiSuratYayasanModel.getPengajuanById(id, isPetugas(req) ? null : idUser);
       if (result.success && result.data) {
         return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat yayasan', result.data);
       }
@@ -124,6 +149,11 @@ class RekomendasiSuratYayasanController {
       }
 
       const { nama_pemohon, nik, jabatan, nama_lembaga, alamat_lembaga } = req.body;
+      const idUser = getTokenUserId(req);
+
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
 
       const pengajuanData = {
         nama_pemohon: nama_pemohon.trim(),
@@ -133,7 +163,7 @@ class RekomendasiSuratYayasanController {
         alamat_lembaga: alamat_lembaga.trim()
       };
 
-      const result = await RekomendasiSuratYayasanModel.updatePengajuan(id, pengajuanData);
+      const result = await RekomendasiSuratYayasanModel.updatePengajuan(id, pengajuanData, isPetugas(req) ? null : idUser);
 
       if (result.success && result.affectedRows > 0) {
         return R.ok(res, 'Pengajuan rekomendasi surat yayasan berhasil diperbarui', null);
@@ -157,7 +187,12 @@ class RekomendasiSuratYayasanController {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
 
-      const result = await RekomendasiSuratYayasanModel.deletePengajuan(id);
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiSuratYayasanModel.deletePengajuan(id, isPetugas(req) ? null : idUser);
 
       if (result.success && result.affectedRows > 0) {
         return R.ok(res, 'Pengajuan rekomendasi surat yayasan berhasil dihapus', null);

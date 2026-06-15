@@ -7,11 +7,12 @@ class Database {
 
       const query = `
         INSERT INTO rekomendasi_penelitian 
-        (nama_peneliti, instansi, topik_penelitian, lokasi_penelitian, waktu_penelitian)
-        VALUES (?, ?, ?, ?, ?)
+        (id_user, nama_peneliti, instansi, topik_penelitian, lokasi_penelitian, waktu_penelitian)
+        VALUES (?, ?, ?, ?, ?, ?)
       `;
 
       const values = [
+        rekomendasiData.id_user,
         rekomendasiData.nama_peneliti,
         rekomendasiData.instansi,
         rekomendasiData.topik_penelitian,
@@ -35,8 +36,9 @@ class Database {
   }
 
   // Update data rekomendasi penelitian
-  static async updateRekomendasi(idPengajuan, rekomendasiData) {
+  static async updateRekomendasi(idPengajuan, rekomendasiData, idUser = null) {
     try {
+      const whereClause = idUser ? 'WHERE id_pengajuan = ? AND id_user = ?' : 'WHERE id_pengajuan = ?';
 
       const query = `
         UPDATE rekomendasi_penelitian 
@@ -45,7 +47,7 @@ class Database {
             topik_penelitian = ?,
             lokasi_penelitian = ?,
             waktu_penelitian = ?
-        WHERE id_pengajuan = ?
+        ${whereClause}
       `;
 
       const values = [
@@ -56,6 +58,10 @@ class Database {
         rekomendasiData.waktu_penelitian,
         idPengajuan
       ];
+
+      if (idUser) {
+        values.push(idUser);
+      }
 
       const [result] = await db.execute(query, values);
 
@@ -72,15 +78,21 @@ class Database {
   }
 
   // Hapus data rekomendasi penelitian
-  static async deleteRekomendasi(idPengajuan) {
+  static async deleteRekomendasi(idPengajuan, idUser = null) {
     try {
+      const whereClause = idUser ? 'WHERE id_pengajuan = ? AND id_user = ?' : 'WHERE id_pengajuan = ?';
 
       const query = `
         DELETE FROM rekomendasi_penelitian
-        WHERE id_pengajuan = ?
+        ${whereClause}
       `;
 
-      const [result] = await db.execute(query, [idPengajuan]);
+      const values = [idPengajuan];
+      if (idUser) {
+        values.push(idUser);
+      }
+
+      const [result] = await db.execute(query, values);
 
       return {
         success: true,
@@ -95,15 +107,18 @@ class Database {
   }
 
   // Ambil semua rekomendasi penelitian
-  static async getAllRekomendasi() {
+  static async getAllRekomendasi(idUser = null) {
     try {
+      const whereClause = idUser ? 'WHERE id_user = ?' : '';
 
       const query = `
         SELECT * FROM rekomendasi_penelitian 
+        ${whereClause}
         ORDER BY created_at DESC
       `;
 
-      const [rows] = await db.execute(query);
+      const values = idUser ? [idUser] : [];
+      const [rows] = await db.execute(query, values);
 
       return {
         success: true,
@@ -118,15 +133,21 @@ class Database {
   }
 
   // Ambil rekomendasi penelitian berdasarkan ID
-  static async getRekomendasiById(idPengajuan) {
+  static async getRekomendasiById(idPengajuan, idUser = null) {
     try {
+      const whereClause = idUser ? 'WHERE id_pengajuan = ? AND id_user = ?' : 'WHERE id_pengajuan = ?';
 
       const query = `
         SELECT * FROM rekomendasi_penelitian 
-        WHERE id_pengajuan = ?
+        ${whereClause}
       `;
 
-      const [rows] = await db.execute(query, [idPengajuan]);
+      const values = [idPengajuan];
+      if (idUser) {
+        values.push(idUser);
+      }
+
+      const [rows] = await db.execute(query, values);
 
       return {
         success: true,

@@ -1,6 +1,14 @@
 const RekomendasiSuratPindahModel = require('../models/rekomendasiSuratPindahModel');
 const R = require('../utils/response');
 
+function getTokenUserId(req) {
+  return req.user && req.user.id_user ? Number(req.user.id_user) : null;
+}
+
+function isPetugas(req) {
+  return req.user && req.user.role === 'petugas';
+}
+
 class RekomendasiSuratPindahController {
   // Validasi field wajib
   static validateInput(data) {
@@ -42,6 +50,11 @@ class RekomendasiSuratPindahController {
   static async buatPengajuan(req, res) {
     try {
       const { nama_lengkap, alamat_asal, alamat_pindah, keterangan } = req.body;
+      const idUser = getTokenUserId(req);
+
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
 
       // Validasi input
       const validation = RekomendasiSuratPindahController.validateInput(req.body);
@@ -50,6 +63,7 @@ class RekomendasiSuratPindahController {
       }
 
       const pengajuanData = {
+        id_user: idUser,
         nama_lengkap: nama_lengkap.trim(),
         alamat_asal: alamat_asal.trim(),
         alamat_pindah: alamat_pindah.trim(),
@@ -61,6 +75,7 @@ class RekomendasiSuratPindahController {
       if (result.success) {
         return R.created(res, 'Pengajuan rekomendasi surat pindah berhasil dibuat', {
           id_pengajuan: result.id,
+          id_user: idUser,
           status: 'Menunggu verifikasi',
           ...pengajuanData
         });
@@ -75,7 +90,12 @@ class RekomendasiSuratPindahController {
   // Ambil semua pengajuan
   static async getAllPengajuan(req, res) {
     try {
-      const result = await RekomendasiSuratPindahModel.getAllPengajuan();
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiSuratPindahModel.getAllPengajuan(isPetugas(req) ? null : idUser);
       if (result.success) {
         return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat pindah', result.data);
       }
@@ -94,7 +114,12 @@ class RekomendasiSuratPindahController {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
 
-      const result = await RekomendasiSuratPindahModel.getPengajuanById(id);
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiSuratPindahModel.getPengajuanById(id, isPetugas(req) ? null : idUser);
       if (result.success && result.data) {
         return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat pindah', result.data);
       }
@@ -123,6 +148,11 @@ class RekomendasiSuratPindahController {
       }
 
       const { nama_lengkap, alamat_asal, alamat_pindah, keterangan } = req.body;
+      const idUser = getTokenUserId(req);
+
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
 
       const pengajuanData = {
         nama_lengkap: nama_lengkap.trim(),
@@ -131,7 +161,7 @@ class RekomendasiSuratPindahController {
         keterangan: keterangan.trim()
       };
 
-      const result = await RekomendasiSuratPindahModel.updatePengajuan(id, pengajuanData);
+      const result = await RekomendasiSuratPindahModel.updatePengajuan(id, pengajuanData, isPetugas(req) ? null : idUser);
 
       if (result.success && result.affectedRows > 0) {
         return R.ok(res, 'Pengajuan rekomendasi surat pindah berhasil diperbarui', null);
@@ -155,7 +185,12 @@ class RekomendasiSuratPindahController {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
 
-      const result = await RekomendasiSuratPindahModel.deletePengajuan(id);
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiSuratPindahModel.deletePengajuan(id, isPetugas(req) ? null : idUser);
 
       if (result.success && result.affectedRows > 0) {
         return R.ok(res, 'Pengajuan rekomendasi surat pindah berhasil dihapus', null);
