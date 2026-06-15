@@ -19,15 +19,11 @@ function buildImagePath(filename) {
 }
 
 class GaleriController {
-  static validateInput(data, isUpdate = false) {
+  static validateInput(data) {
     const errors = [];
 
     if (!data.judul || data.judul.trim() === '') {
       errors.push('judul tidak boleh kosong');
-    }
-
-    if (!isUpdate && !data.gambar) {
-      errors.push('gambar tidak boleh kosong');
     }
 
     return {
@@ -95,7 +91,7 @@ class GaleriController {
         return R.badRequest(res, 'gambar tidak boleh kosong');
       }
 
-      const validation = GaleriController.validateInput(req.body, false);
+      const validation = GaleriController.validateInput(req.body);
       if (!validation.isValid) {
         return R.badRequest(res, 'Validasi gagal', validation.errors);
       }
