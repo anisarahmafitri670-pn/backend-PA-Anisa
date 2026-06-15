@@ -5,6 +5,14 @@ function normalizeDigits(value) {
   return String(value || '').replace(/\D/g, '');
 }
 
+function getTokenUserId(req) {
+  return req.user && req.user.id_user ? Number(req.user.id_user) : null;
+}
+
+function isPetugas(req) {
+  return req.user && req.user.role === 'petugas';
+}
+
 class RekomendasiSuratKerjaController {
   // Validasi field wajib
   static validateInput(data) {
@@ -46,6 +54,11 @@ class RekomendasiSuratKerjaController {
   static async buatPengajuan(req, res) {
     try {
       const { nama_pemohon, alamat, nik, no_hp, keterangan } = req.body;
+      const idUser = getTokenUserId(req);
+
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
 
       // Validasi input
       const validation = RekomendasiSuratKerjaController.validateInput(req.body);
@@ -54,6 +67,7 @@ class RekomendasiSuratKerjaController {
       }
 
       const pengajuanData = {
+        id_user: idUser,
         nama_pemohon: nama_pemohon.trim(),
         alamat: alamat.trim(),
         nik: normalizeDigits(nik),
@@ -66,6 +80,7 @@ class RekomendasiSuratKerjaController {
       if (result.success) {
         return R.created(res, 'Pengajuan rekomendasi surat kerja berhasil dibuat', {
           id_pengajuan: result.id,
+          id_user: idUser,
           status: 'Menunggu verifikasi',
           ...pengajuanData
         });
@@ -80,7 +95,12 @@ class RekomendasiSuratKerjaController {
   // Ambil semua pengajuan
   static async getAllPengajuan(req, res) {
     try {
-      const result = await RekomendasiSuratKerjaModel.getAllPengajuan();
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiSuratKerjaModel.getAllPengajuan(isPetugas(req) ? null : idUser);
       if (result.success) {
         return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat kerja', result.data);
       }
@@ -99,7 +119,12 @@ class RekomendasiSuratKerjaController {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
 
-      const result = await RekomendasiSuratKerjaModel.getPengajuanById(id);
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiSuratKerjaModel.getPengajuanById(id, isPetugas(req) ? null : idUser);
       if (result.success && result.data) {
         return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat kerja', result.data);
       }
@@ -122,6 +147,11 @@ class RekomendasiSuratKerjaController {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
 
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
       const validation = RekomendasiSuratKerjaController.validateInput(req.body);
       if (!validation.isValid) {
         return R.badRequest(res, 'Validasi gagal', validation.errors);
@@ -137,7 +167,7 @@ class RekomendasiSuratKerjaController {
         keterangan: keterangan.trim()
       };
 
-      const result = await RekomendasiSuratKerjaModel.updatePengajuan(id, pengajuanData);
+      const result = await RekomendasiSuratKerjaModel.updatePengajuan(id, pengajuanData, isPetugas(req) ? null : idUser);
 
       if (result.success && result.affectedRows > 0) {
         return R.ok(res, 'Pengajuan rekomendasi surat kerja berhasil diperbarui', null);
@@ -161,7 +191,12 @@ class RekomendasiSuratKerjaController {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
 
-      const result = await RekomendasiSuratKerjaModel.deletePengajuan(id);
+      const idUser = getTokenUserId(req);
+      if (!idUser) {
+        return R.unauthorized(res, 'Token tidak valid');
+      }
+
+      const result = await RekomendasiSuratKerjaModel.deletePengajuan(id, isPetugas(req) ? null : idUser);
 
       if (result.success && result.affectedRows > 0) {
         return R.ok(res, 'Pengajuan rekomendasi surat kerja berhasil dihapus', null);
