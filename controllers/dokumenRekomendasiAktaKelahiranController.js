@@ -73,6 +73,10 @@ class DokumenRekomendasiAktaKelahiranController {
         uploadedDocs.push(dokumenData);
       }
 
+      if (uploadedDocs.length === 0 && files.length > 0 && !legacyFile) {
+        return R.badRequest(res, 'Tidak ada file dokumen yang valid');
+      }
+
       // legacy: jenis_dokumen + file
       if (uploadedDocs.length === 0 && legacyFile) {
         const jenisDokumen = String(req.body.jenis_dokumen || '').trim();

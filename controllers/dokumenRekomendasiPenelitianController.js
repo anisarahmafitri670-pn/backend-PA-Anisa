@@ -140,6 +140,10 @@ class DokumenRekomendasiPenelitianController {
         uploadedDocs.push(dokumenData);
       }
 
+      if (uploadedDocs.length === 0 && normalized.type !== 'none' && !legacyFile) {
+        return R.badRequest(res, 'Tidak ada file dokumen yang valid');
+      }
+
       return R.created(res, 'Dokumen berhasil diupload', {
         id_pengajuan: idPengajuan,
         dokumen: uploadedDocs

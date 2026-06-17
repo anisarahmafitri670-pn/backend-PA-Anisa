@@ -82,6 +82,10 @@ class DokumenRekomendasiKartuKeluargaController {
         uploadedDocs.push(dokumenData);
       }
 
+      if (uploadedDocs.length === 0 && files.length > 0 && !legacyFile) {
+        return R.badRequest(res, 'Tidak ada file dokumen yang valid');
+      }
+
       if (uploadedDocs.length === 0 && legacyFile) {
         const jenisDokumen = normalizeJenisDokumen(req.body.jenis_dokumen);
         if (!jenisDokumen) {
