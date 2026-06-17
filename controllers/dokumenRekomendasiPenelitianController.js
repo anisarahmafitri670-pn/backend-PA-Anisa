@@ -29,9 +29,9 @@ function normalizeReqFiles(reqFiles) {
 class DokumenRekomendasiPenelitianController {
   static async uploadDokumen(req, res) {
     try {
-      if ((process.env.NODE_ENV || '').toLowerCase() === 'development') {
-        console.log('REQ FILES:', req.files);
-      }
+      console.log('REQ FILES PENELITIAN:', req.file);
+      console.log('REQ FILES PENELITIAN ALL:', req.files);
+      console.log('REQ BODY PENELITIAN:', req.body);
 
       const idPengajuan = parseInt(req.params.id, 10);
       if (Number.isNaN(idPengajuan)) {
