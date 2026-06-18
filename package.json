@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "test": "jest --runInBand"
+    "test": "jest --runInBand --verbose"
   },
   "keywords": [
     "express",
