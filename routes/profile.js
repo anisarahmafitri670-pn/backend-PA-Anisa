@@ -48,8 +48,10 @@ function uploadAvatar(req, res, next) {
 }
 
 router.get('/', auth, ProfileController.getProfile);
-router.put('/', auth, ProfileController.updateProfile);
+router.put('/', auth, uploadAvatar, ProfileController.updateProfile);
+router.patch('/', auth, uploadAvatar, ProfileController.updateProfile);
 router.put('/avatar', auth, uploadAvatar, ProfileController.updateAvatar);
+router.delete('/avatar', auth, ProfileController.deleteAvatar);
 router.get('/login-history', auth, UserLoginHistoryController.getLoginHistory);
 
 module.exports = router;

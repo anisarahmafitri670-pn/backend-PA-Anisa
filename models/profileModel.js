@@ -19,7 +19,7 @@ class ProfileModel {
     try {
       const query = `
         UPDATE users
-        SET nama_lengkap = ?, username = ?, email = ?, no_hp = ?, alamat = ?, updated_at = NOW()
+        SET nama_lengkap = ?, username = ?, email = ?, no_hp = ?, alamat = ?, avatar = COALESCE(?, avatar), updated_at = NOW()
         WHERE id_user = ?
       `;
       const values = [
@@ -28,6 +28,7 @@ class ProfileModel {
         profileData.email,
         profileData.no_hp,
         profileData.alamat,
+        profileData.avatar || null,
         idUser
       ];
       const [result] = await db.execute(query, values);
@@ -45,6 +46,20 @@ class ProfileModel {
         WHERE id_user = ?
       `;
       const [result] = await db.execute(query, [avatarPath, idUser]);
+      return { success: true, affectedRows: result.affectedRows };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
+
+  static async deleteAvatar(idUser) {
+    try {
+      const query = `
+        UPDATE users
+        SET avatar = NULL, updated_at = NOW()
+        WHERE id_user = ?
+      `;
+      const [result] = await db.execute(query, [idUser]);
       return { success: true, affectedRows: result.affectedRows };
     } catch (error) {
       return { success: false, error: error.message };
