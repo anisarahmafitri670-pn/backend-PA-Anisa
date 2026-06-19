@@ -47,11 +47,18 @@ function uploadAvatar(req, res, next) {
   });
 }
 
-router.get('/', auth, ProfileController.getProfile);
-router.put('/', auth, uploadAvatar, ProfileController.updateProfile);
-router.patch('/', auth, uploadAvatar, ProfileController.updateProfile);
-router.put('/avatar', auth, uploadAvatar, ProfileController.updateAvatar);
-router.delete('/avatar', auth, ProfileController.deleteAvatar);
-router.get('/login-history', auth, UserLoginHistoryController.getLoginHistory);
+router.get('/profile-test', (req, res) => {
+  return res.status(200).json({
+    success: true,
+    message: 'Profile route aktif'
+  });
+});
+
+router.get(['/', '/profile'], auth, ProfileController.getProfile);
+router.put(['/', '/profile'], auth, uploadAvatar, ProfileController.updateProfile);
+router.patch(['/', '/profile'], auth, uploadAvatar, ProfileController.updateProfile);
+router.put(['/avatar', '/profile/avatar'], auth, uploadAvatar, ProfileController.updateAvatar);
+router.delete(['/avatar', '/profile/avatar'], auth, ProfileController.deleteAvatar);
+router.get(['/login-history', '/profile/login-history'], auth, UserLoginHistoryController.getLoginHistory);
 
 module.exports = router;

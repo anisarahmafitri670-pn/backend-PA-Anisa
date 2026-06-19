@@ -48,7 +48,7 @@ const galeriRoute = require('./routes/galeri');
 app.use(rekomendasiPenelitianRoute);
 app.use('/api/auth', authRoutes);
 app.use('/api/profile', profileRoutes);
-app.use('/api/users/profile', profileRoutes);
+app.use('/api/users', profileRoutes);
 app.use(usersRoute);
 app.use(rekomendasiSuratPindahRoute);
 app.use(rekomendasiAktaKelahiranRoute);
