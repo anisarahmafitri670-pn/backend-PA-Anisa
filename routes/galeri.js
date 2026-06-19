@@ -5,7 +5,7 @@ const auth = require('../middleware/auth');
 const authorizeRoles = require('../middleware/role');
 const { uploadGaleri } = require('../middleware/uploadGaleri');
 
-const petugasOnly = authorizeRoles('petugas', 'kepala_camat');
+const petugasOnly = authorizeRoles('petugas', 'kepala camat');
 
 function handleSingleUpload(fieldName) {
   return (req, res, next) => {

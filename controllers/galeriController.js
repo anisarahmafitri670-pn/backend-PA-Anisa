@@ -6,7 +6,7 @@ function getTokenUserId(req) {
 }
 
 function isPetugas(req) {
-  return req.user && ['petugas', 'kepala_camat'].includes(req.user.role);
+  return req.user && ['petugas', 'kepala camat'].includes(req.user.role);
 }
 
 function normalizeStatus(value) {

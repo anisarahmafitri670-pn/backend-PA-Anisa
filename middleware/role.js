@@ -1,8 +1,8 @@
-﻿function authorizeRoles(...allowedRoles) {
-  const allowed = new Set(allowedRoles);
+function authorizeRoles(...allowedRoles) {
+  const allowed = new Set(allowedRoles.map((role) => String(role || '').trim().toLowerCase()));
 
   return (req, res, next) => {
-    const role = req.user?.role;
+    const role = String(req.user?.role || '').trim().toLowerCase();
     if (!role) {
       return res.status(401).json({ success: false, message: 'Unauthorized' });
     }

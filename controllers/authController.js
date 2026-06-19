@@ -4,7 +4,7 @@ const UserModel = require('../models/userModel');
 const UserLoginHistoryModel = require('../models/userLoginHistoryModel');
 const R = require('../utils/response');
 
-const ALLOWED_ROLES = new Set(['masyarakat', 'petugas', 'kepala_camat']);
+const ALLOWED_ROLES = new Set(['masyarakat', 'petugas', 'kepala camat']);
 
 function normalizeUsername(username) {
   return (username || '').trim();
@@ -132,7 +132,9 @@ class AuthController {
         return R.unauthorized(res, 'Username atau password salah');
       }
 
-      if (!ALLOWED_ROLES.has(user.role)) {
+      const role = String(user.role || '').trim().toLowerCase();
+
+      if (!ALLOWED_ROLES.has(role)) {
         // Tidak menggunakan helper forbidden sesuai permintaan. Tetap standar: success + message.
         return res.status(403).json({ success: false, message: 'Role user tidak valid' });
       }
@@ -142,7 +144,7 @@ class AuthController {
         return R.unauthorized(res, 'Username atau password salah');
       }
 
-      const payload = { id_user: user.id_user, username: user.username, role: user.role };
+      const payload = { id_user: user.id_user, username: user.username, role };
       const accessToken = jwt.sign(payload, jwtConfig.secret, { expiresIn: jwtConfig.expiresIn });
 
       const history = await UserLoginHistoryModel.createHistory({
@@ -162,7 +164,7 @@ class AuthController {
           nama_lengkap: namaLengkap,
           username: user.username,
           email: user.email,
-          role: user.role
+          role
         }
       });
     } catch (error) {
