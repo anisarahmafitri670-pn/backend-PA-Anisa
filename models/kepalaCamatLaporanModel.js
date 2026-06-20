@@ -61,18 +61,21 @@ class KepalaCamatLaporanModel {
       const entries = Object.entries(LAYANAN_CONFIG);
       const results = await Promise.all(
         entries.map(async ([layananKey, config]) => {
-          const query = `
-            SELECT *
-            FROM ${config.table}
-            ORDER BY created_at DESC
-          `;
-          const [rows] = await db.query(query);
+          try {
+            const query = `
+              SELECT *
+              FROM ${config.table}
+            `;
+            const [rows] = await db.query(query);
 
-          return rows.map((row) => ({
-            layanan: layananKey,
-            config,
-            row
-          }));
+            return rows.map((row) => ({
+              layanan: layananKey,
+              config,
+              row
+            }));
+          } catch (error) {
+            throw new Error(`${config.table}: ${error.message}`);
+          }
         })
       );
 

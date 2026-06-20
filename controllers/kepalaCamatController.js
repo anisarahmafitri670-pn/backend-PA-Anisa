@@ -65,6 +65,10 @@ function buildNomorPengajuan(code, idPengajuan) {
   return `${code}-${idPengajuan}`;
 }
 
+function resolveTanggalPengajuan(row) {
+  return row.created_at || row.updated_at || row.tanggal_verifikasi || row.waktu_penelitian || null;
+}
+
 function mapRowToNormalized(item) {
   const { layanan, config, row } = item;
   const namaPemohon = row[config.namaField] || row.nama_pemohon || row.nama_lengkap || row.nama_peneliti || null;
@@ -75,7 +79,7 @@ function mapRowToNormalized(item) {
     nama_pemohon: namaPemohon,
     jenis_layanan: config.label,
     layanan,
-    tanggal_pengajuan: toIsoDate(row.created_at),
+    tanggal_pengajuan: toIsoDate(resolveTanggalPengajuan(row)),
     status: formatStatus(row.status),
     catatan_petugas: row.catatan_petugas || null,
     file_surat_hasil: row.file_surat_hasil || null
@@ -194,7 +198,11 @@ class KepalaCamatController {
     try {
       const result = await KepalaCamatLaporanModel.getAllPengajuan();
       if (!result.success) {
-        return R.serverError(res, 'Gagal mengambil data dashboard kepala camat');
+        return res.status(500).json({
+          success: false,
+          message: 'Gagal mengambil data dashboard kepala camat',
+          error: result.error || 'Internal Server Error'
+        });
       }
 
       const normalized = result.data.map(mapRowToNormalized);
@@ -219,7 +227,11 @@ class KepalaCamatController {
         pengajuan_terbaru: sorted.slice(0, 10)
       });
     } catch (error) {
-      return R.serverError(res, 'Gagal mengambil data dashboard kepala camat');
+      return res.status(500).json({
+        success: false,
+        message: 'Gagal mengambil data dashboard kepala camat',
+        error: error.message || 'Internal Server Error'
+      });
     }
   }
 
@@ -227,7 +239,11 @@ class KepalaCamatController {
     try {
       const result = await KepalaCamatLaporanModel.getAllPengajuan();
       if (!result.success) {
-        return R.serverError(res, 'Gagal mengambil data laporan kepala camat');
+        return res.status(500).json({
+          success: false,
+          message: 'Gagal mengambil data laporan kepala camat',
+          error: result.error || 'Internal Server Error'
+        });
       }
 
       const normalized = result.data.map(mapRowToNormalized);
@@ -248,7 +264,11 @@ class KepalaCamatController {
         daftar_pengajuan: filtered
       });
     } catch (error) {
-      return R.serverError(res, 'Gagal mengambil data laporan kepala camat');
+      return res.status(500).json({
+        success: false,
+        message: 'Gagal mengambil data laporan kepala camat',
+        error: error.message || 'Internal Server Error'
+      });
     }
   }
 
@@ -263,7 +283,11 @@ class KepalaCamatController {
 
       const result = await KepalaCamatLaporanModel.getDetailByLayananAndId(layanan, id);
       if (!result.success) {
-        return R.serverError(res, 'Gagal mengambil detail laporan kepala camat');
+        return res.status(500).json({
+          success: false,
+          message: 'Gagal mengambil detail laporan kepala camat',
+          error: result.error || 'Internal Server Error'
+        });
       }
 
       if (!result.data) {
@@ -277,7 +301,11 @@ class KepalaCamatController {
         detail_pengajuan: result.data.row
       });
     } catch (error) {
-      return R.serverError(res, 'Gagal mengambil detail laporan kepala camat');
+      return res.status(500).json({
+        success: false,
+        message: 'Gagal mengambil detail laporan kepala camat',
+        error: error.message || 'Internal Server Error'
+      });
     }
   }
 }
