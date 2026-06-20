@@ -5,5 +5,7 @@ const authorizeRoles = require('../middleware/role');
 const KepalaCamatController = require('../controllers/kepalaCamatController');
 
 router.get('/api/kepala-camat/dashboard', auth, authorizeRoles('kepala camat'), KepalaCamatController.dashboard);
+router.get('/api/kepala-camat/laporan', auth, authorizeRoles('kepala camat'), KepalaCamatController.laporan);
+router.get('/api/kepala-camat/laporan/:layanan/:id', auth, authorizeRoles('kepala camat'), KepalaCamatController.detailLaporan);
 
 module.exports = router;
