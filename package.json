@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node app.js",
     "dev": "nodemon app.js",
-    "test": "jest --runInBand --verbose"
+    "test": "node scripts/run-iterasi1-tests.js"
   },
   "keywords": [
     "express",
