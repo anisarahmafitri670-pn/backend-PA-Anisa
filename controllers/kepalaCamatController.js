@@ -48,7 +48,11 @@ function formatStatus(status) {
   }
 }
 
-function toIsoDate(value) {
+function padNomorPengajuan(idPengajuan) {
+  return String(idPengajuan || 0).padStart(3, '0');
+}
+
+function formatTanggal(value) {
   if (!value) {
     return null;
   }
@@ -58,30 +62,97 @@ function toIsoDate(value) {
     return String(value);
   }
 
-  return date.toISOString();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+
+  return `${year}-${month}-${day}`;
+}
+
+function toSortableTime(value) {
+  const date = new Date(value || 0);
+  const time = date.getTime();
+  return Number.isNaN(time) ? 0 : time;
 }
 
 function buildNomorPengajuan(code, idPengajuan) {
-  return `${code}-${idPengajuan}`;
+  return `${code}-${padNomorPengajuan(idPengajuan)}`;
 }
 
 function resolveTanggalPengajuan(row) {
   return row.created_at || row.updated_at || row.tanggal_verifikasi || row.waktu_penelitian || null;
 }
 
-function mapRowToNormalized(item) {
-  const { layanan, config, row } = item;
-  const namaPemohon = row[config.namaField] || row.nama_pemohon || row.nama_lengkap || row.nama_peneliti || null;
+function pickValue(row, fields) {
+  for (const field of fields) {
+    if (row[field] !== undefined && row[field] !== null && String(row[field]).trim() !== '') {
+      return row[field];
+    }
+  }
+
+  return null;
+}
+
+function buildDataPemohon(item) {
+  const row = item.row;
+
+  return {
+    nama_pemohon: pickValue(row, ['nama_pemohon', 'nama_lengkap', 'nama_peneliti']),
+    nik: pickValue(row, ['nik', 'nik_pemohon']),
+    no_hp: pickValue(row, ['no_hp']),
+    alamat: pickValue(row, ['alamat', 'alamat_pemohon', 'alamat_asal']),
+    email: pickValue(row, ['email']),
+    instansi: pickValue(row, ['instansi']),
+    nama_pewaris: pickValue(row, ['nama_pewaris']),
+    nik_pewaris: pickValue(row, ['nik_pewaris']),
+    alamat_pewaris: pickValue(row, ['alamat_pewaris'])
+  };
+}
+
+function buildDataPengajuan(item) {
+  const row = item.row;
 
   return {
     id_pengajuan: row.id_pengajuan,
-    nomor_pengajuan: buildNomorPengajuan(config.code, row.id_pengajuan),
-    nama_pemohon: namaPemohon,
-    jenis_layanan: config.label,
-    layanan,
-    tanggal_pengajuan: toIsoDate(resolveTanggalPengajuan(row)),
+    jenis_layanan: item.config.label,
+    nomor_pengajuan: buildNomorPengajuan(item.config.code, row.id_pengajuan),
+    tanggal_pengajuan: formatTanggal(resolveTanggalPengajuan(row)),
+    keterangan: pickValue(row, ['keterangan']),
+    alamat_asal: pickValue(row, ['alamat_asal']),
+    alamat_pindah: pickValue(row, ['alamat_pindah']),
+    topik_penelitian: pickValue(row, ['topik_penelitian']),
+    lokasi_penelitian: pickValue(row, ['lokasi_penelitian']),
+    waktu_penelitian: pickValue(row, ['waktu_penelitian']),
+    jabatan: pickValue(row, ['jabatan']),
+    nama_lembaga: pickValue(row, ['nama_lembaga']),
+    alamat_lembaga: pickValue(row, ['alamat_lembaga'])
+  };
+}
+
+function mapDokumen(item) {
+  return {
+    id_dokumen: item.id_dokumen,
+    jenis_dokumen: item.jenis_dokumen,
+    file_path: item.file_path,
+    original_name: item.original_name,
+    mime_type: item.mime_type,
+    file_size: item.file_size,
+    uploaded_at: item.uploaded_at
+  };
+}
+
+function mapRowToNormalized(item) {
+  const row = item.row;
+
+  return {
+    id_pengajuan: row.id_pengajuan,
+    nomor_pengajuan: buildNomorPengajuan(item.config.code, row.id_pengajuan),
+    nama_pemohon: pickValue(row, [item.config.namaField, 'nama_pemohon', 'nama_lengkap', 'nama_peneliti']),
+    jenis_layanan: item.config.label,
+    layanan: item.layanan,
+    tanggal_pengajuan: formatTanggal(resolveTanggalPengajuan(row)),
     status: formatStatus(row.status),
-    catatan_petugas: row.catatan_petugas || null,
+    catatan_petugas: row.catatan_petugas || '',
     file_surat_hasil: row.file_surat_hasil || null
   };
 }
@@ -156,8 +227,12 @@ function filterPengajuan(data, query) {
       return false;
     }
 
-    if (layanan && item.layanan !== layanan) {
-      return false;
+    if (layanan) {
+      const layananKey = String(item.layanan || '').trim().toLowerCase();
+      const layananLabel = String(item.jenis_layanan || '').trim().toLowerCase();
+      if (layananKey !== layanan && layananLabel !== layanan) {
+        return false;
+      }
     }
 
     if (!filterByTanggal(item, tanggalAwal, tanggalAkhir)) {
@@ -168,9 +243,7 @@ function filterPengajuan(data, query) {
       const haystack = [
         item.nomor_pengajuan,
         item.nama_pemohon,
-        item.jenis_layanan,
-        item.status,
-        item.catatan_petugas
+        item.jenis_layanan
       ]
         .filter(Boolean)
         .join(' ')
@@ -185,12 +258,8 @@ function filterPengajuan(data, query) {
   });
 }
 
-function sortByTanggalDesc(data) {
-  return [...data].sort((a, b) => {
-    const left = new Date(a.tanggal_pengajuan || 0).getTime();
-    const right = new Date(b.tanggal_pengajuan || 0).getTime();
-    return right - left;
-  });
+function sortByTanggalDesc(data, getValue = (item) => item.tanggal_pengajuan) {
+  return [...data].sort((a, b) => toSortableTime(getValue(b)) - toSortableTime(getValue(a)));
 }
 
 class KepalaCamatController {
@@ -241,7 +310,7 @@ class KepalaCamatController {
       if (!result.success) {
         return res.status(500).json({
           success: false,
-          message: 'Gagal mengambil data laporan kepala camat',
+          message: 'Gagal mengambil data laporan',
           error: result.error || 'Internal Server Error'
         });
       }
@@ -257,7 +326,7 @@ class KepalaCamatController {
         }
       });
 
-      return R.ok(res, 'Data laporan kepala camat berhasil diambil', {
+      return R.ok(res, 'Data laporan berhasil diambil', {
         total_pengajuan: filtered.length,
         rekap_status: rekapStatus,
         rekap_layanan: buildRekapLayanan(filtered),
@@ -266,7 +335,7 @@ class KepalaCamatController {
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: 'Gagal mengambil data laporan kepala camat',
+        message: 'Gagal mengambil data laporan',
         error: error.message || 'Internal Server Error'
       });
     }
@@ -285,7 +354,7 @@ class KepalaCamatController {
       if (!result.success) {
         return res.status(500).json({
           success: false,
-          message: 'Gagal mengambil detail laporan kepala camat',
+          message: 'Gagal mengambil detail laporan',
           error: result.error || 'Internal Server Error'
         });
       }
@@ -296,14 +365,21 @@ class KepalaCamatController {
 
       const normalized = mapRowToNormalized(result.data);
 
-      return R.ok(res, 'Detail laporan kepala camat berhasil diambil', {
+      return R.ok(res, 'Detail laporan berhasil diambil', {
         ...normalized,
+        data_pemohon: buildDataPemohon(result.data),
+        data_pengajuan: buildDataPengajuan(result.data),
+        status: formatStatus(result.data.row.status),
+        catatan_petugas: result.data.row.catatan_petugas || '',
+        daftar_dokumen: (result.data.dokumen || []).map(mapDokumen),
+        file_surat_hasil: result.data.row.file_surat_hasil || null,
+        nama_file_surat_hasil: result.data.row.nama_file_surat_hasil || null,
         detail_pengajuan: result.data.row
       });
     } catch (error) {
       return res.status(500).json({
         success: false,
-        message: 'Gagal mengambil detail laporan kepala camat',
+        message: 'Gagal mengambil detail laporan',
         error: error.message || 'Internal Server Error'
       });
     }
