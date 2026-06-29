@@ -1,4 +1,5 @@
 const RekomendasiSuratTanahModel = require('../models/rekomendasiSuratTanahModel');
+const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
 const R = require('../utils/response');
 
 function normalizeDigits(value) {
@@ -97,7 +98,11 @@ class RekomendasiSuratTanahController {
 
       const result = await RekomendasiSuratTanahModel.getAllPengajuan(isPetugas(req) ? null : idUser);
       if (result.success) {
-        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat tanah', result.data);
+        return R.ok(
+          res,
+          'Berhasil mengambil data pengajuan rekomendasi surat tanah',
+          addNomorPengajuanToList(result.data, 'ST')
+        );
       }
 
       return R.serverError(res, 'Gagal mengambil data pengajuan rekomendasi surat tanah');

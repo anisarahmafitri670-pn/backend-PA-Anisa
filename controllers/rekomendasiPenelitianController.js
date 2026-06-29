@@ -1,4 +1,5 @@
 const RekomendasiPenelitianModel = require('../models/rekomendasiPenelitianModel');
+const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
 const R = require('../utils/response');
 
 function getTokenUserId(req) {
@@ -97,7 +98,11 @@ class RekomendasiPenelitianController {
 
       const result = await RekomendasiPenelitianModel.getAllRekomendasi(isPetugas(req) ? null : idUser);
       if (result.success) {
-        return R.ok(res, 'Berhasil mengambil data rekomendasi penelitian', result.data);
+        return R.ok(
+          res,
+          'Berhasil mengambil data rekomendasi penelitian',
+          addNomorPengajuanToList(result.data, 'RP')
+        );
       }
 
       return R.serverError(res, 'Gagal mengambil data rekomendasi penelitian');

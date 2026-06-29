@@ -1,4 +1,5 @@
 const RekomendasiSuratAhliWarisModel = require('../models/rekomendasiSuratAhliWarisModel');
+const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
 const R = require('../utils/response');
 
 function normalizeDigits(value) {
@@ -122,7 +123,11 @@ class RekomendasiSuratAhliWarisController {
 
       const result = await RekomendasiSuratAhliWarisModel.getAllPengajuan(isPetugas(req) ? null : idUser);
       if (result.success) {
-        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat ahli waris', result.data);
+        return R.ok(
+          res,
+          'Berhasil mengambil data pengajuan rekomendasi surat ahli waris',
+          addNomorPengajuanToList(result.data, 'AW')
+        );
       }
 
       return R.serverError(res, 'Gagal mengambil data pengajuan rekomendasi surat ahli waris');

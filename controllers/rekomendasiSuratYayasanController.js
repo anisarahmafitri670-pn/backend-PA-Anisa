@@ -1,4 +1,5 @@
 const RekomendasiSuratYayasanModel = require('../models/rekomendasiSuratYayasanModel');
+const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
 const R = require('../utils/response');
 
 function normalizeDigits(value) {
@@ -98,7 +99,11 @@ class RekomendasiSuratYayasanController {
 
       const result = await RekomendasiSuratYayasanModel.getAllPengajuan(isPetugas(req) ? null : idUser);
       if (result.success) {
-        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat yayasan', result.data);
+        return R.ok(
+          res,
+          'Berhasil mengambil data pengajuan rekomendasi surat yayasan',
+          addNomorPengajuanToList(result.data, 'SY')
+        );
       }
 
       return R.serverError(res, 'Gagal mengambil data pengajuan rekomendasi surat yayasan');

@@ -1,4 +1,5 @@
 const RekomendasiKartuKeluargaModel = require('../models/rekomendasiKartuKeluargaModel');
+const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
 const R = require('../utils/response');
 
 function normalizeDigits(value) {
@@ -97,7 +98,11 @@ class RekomendasiKartuKeluargaController {
 
       const result = await RekomendasiKartuKeluargaModel.getAllPengajuan(isPetugas(req) ? null : idUser);
       if (result.success) {
-        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi kartu keluarga', result.data);
+        return R.ok(
+          res,
+          'Berhasil mengambil data pengajuan rekomendasi kartu keluarga',
+          addNomorPengajuanToList(result.data, 'KK')
+        );
       }
 
       return R.serverError(res, 'Gagal mengambil data pengajuan rekomendasi kartu keluarga');

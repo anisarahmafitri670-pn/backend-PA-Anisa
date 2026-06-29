@@ -1,4 +1,5 @@
 const RekomendasiAktaKelahiranModel = require('../models/rekomendasiAktaKelahiranModel');
+const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
 const R = require('../utils/response');
 
 function normalizeDigits(value) {
@@ -97,7 +98,11 @@ class RekomendasiAktaKelahiranController {
 
       const result = await RekomendasiAktaKelahiranModel.getAllPengajuan(isPetugas(req) ? null : idUser);
       if (result.success) {
-        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi akta kelahiran', result.data);
+        return R.ok(
+          res,
+          'Berhasil mengambil data pengajuan rekomendasi akta kelahiran',
+          addNomorPengajuanToList(result.data, 'AK')
+        );
       }
 
       return R.serverError(res, 'Gagal mengambil data pengajuan rekomendasi akta kelahiran');

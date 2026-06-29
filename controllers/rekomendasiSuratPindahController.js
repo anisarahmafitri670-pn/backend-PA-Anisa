@@ -1,4 +1,5 @@
 const RekomendasiSuratPindahModel = require('../models/rekomendasiSuratPindahModel');
+const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
 const R = require('../utils/response');
 
 function getTokenUserId(req) {
@@ -97,7 +98,11 @@ class RekomendasiSuratPindahController {
 
       const result = await RekomendasiSuratPindahModel.getAllPengajuan(isPetugas(req) ? null : idUser);
       if (result.success) {
-        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat pindah', result.data);
+        return R.ok(
+          res,
+          'Berhasil mengambil data pengajuan rekomendasi surat pindah',
+          addNomorPengajuanToList(result.data, 'SP')
+        );
       }
 
       return R.serverError(res, 'Gagal mengambil data pengajuan rekomendasi surat pindah');
