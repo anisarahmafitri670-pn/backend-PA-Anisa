@@ -10,7 +10,20 @@ const PREFIX_BY_LAYANAN = {
 };
 
 function padNomorPengajuan(idPengajuan) {
-  return String(idPengajuan || 0).padStart(3, '0');
+  const value = String(idPengajuan || 0);
+  if (value.length >= 3) {
+    return value;
+  }
+
+  if (value.length === 2) {
+    return `0${value}`;
+  }
+
+  if (value.length === 1) {
+    return `00${value}`;
+  }
+
+  return '000';
 }
 
 function buildNomorPengajuan(prefix, idPengajuan) {
