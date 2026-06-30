@@ -156,6 +156,7 @@ class AuthController {
       }
 
       const namaLengkap = (user.nama_lengkap || user.nama || '').trim();
+      const avatar = user.avatar || user.foto_profil || null;
 
       return R.ok(res, 'Login berhasil', {
         accessToken,
@@ -164,7 +165,10 @@ class AuthController {
           nama_lengkap: namaLengkap,
           username: user.username,
           email: user.email,
-          role
+          role,
+          no_hp: user.no_hp || null,
+          alamat: user.alamat || null,
+          avatar
         }
       });
     } catch (error) {
