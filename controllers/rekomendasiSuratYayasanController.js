@@ -106,9 +106,19 @@ class RekomendasiSuratYayasanController {
         );
       }
 
-      return R.serverError(res, 'Gagal mengambil data pengajuan rekomendasi surat yayasan');
+      console.error('GET YAYASAN LIST ERROR:', result.error);
+      return res.status(500).json({
+        success: false,
+        message: 'Gagal mengambil data pengajuan rekomendasi surat yayasan',
+        error: result.error || 'Unknown database error'
+      });
     } catch (error) {
-      return R.serverError(res);
+      console.error('GET YAYASAN LIST EXCEPTION:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Terjadi kesalahan pada server',
+        error: error.message
+      });
     }
   }
 
