@@ -92,12 +92,22 @@ class RekomendasiSuratYayasanController {
   // Ambil semua pengajuan
   static async getAllPengajuan(req, res) {
     try {
+      console.log('[YAYASAN] getAllPengajuan dipanggil');
+      console.log('[YAYASAN] req.user:', req.user);
+
       const idUser = getTokenUserId(req);
+      console.log('[YAYASAN] idUser:', idUser);
+
       if (!idUser) {
         return R.unauthorized(res, 'Token tidak valid');
       }
 
-      const result = await RekomendasiSuratYayasanModel.getAllPengajuan(isPetugas(req) ? null : idUser);
+      const petugasMode = isPetugas(req);
+      console.log('[YAYASAN] petugasMode:', petugasMode);
+
+      const result = await RekomendasiSuratYayasanModel.getAllPengajuan(petugasMode ? null : idUser);
+      console.log('[YAYASAN] hasil model:', result);
+
       if (result.success) {
         return R.ok(
           res,
