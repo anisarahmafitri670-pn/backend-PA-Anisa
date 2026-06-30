@@ -31,26 +31,37 @@ function buildNomorPengajuan(prefix, idPengajuan) {
 }
 
 function ensureNomorPengajuan(item, prefix) {
-  if (!item || typeof item !== 'object') {
+  try {
+    if (!item || typeof item !== 'object') {
+      return item;
+    }
+
+    if (item.nomor_pengajuan) {
+      return item;
+    }
+
+    if (!prefix || !item.id_pengajuan) {
+      return item;
+    }
+
+    return Object.assign({}, item, {
+      nomor_pengajuan: buildNomorPengajuan(prefix, item.id_pengajuan)
+    });
+  } catch (error) {
     return item;
   }
-
-  if (item.nomor_pengajuan) {
-    return item;
-  }
-
-  return {
-    ...item,
-    nomor_pengajuan: buildNomorPengajuan(prefix, item.id_pengajuan)
-  };
 }
 
 function addNomorPengajuanToList(items, prefix) {
-  if (!Array.isArray(items)) {
-    return [];
-  }
+  try {
+    if (!Array.isArray(items)) {
+      return [];
+    }
 
-  return items.map((item) => ensureNomorPengajuan(item, prefix));
+    return items.map((item) => ensureNomorPengajuan(item, prefix));
+  } catch (error) {
+    return Array.isArray(items) ? items : [];
+  }
 }
 
 module.exports = {
