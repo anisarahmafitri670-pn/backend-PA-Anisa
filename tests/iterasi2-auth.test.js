@@ -14,7 +14,8 @@ jest.mock('bcryptjs', () => ({
 }));
 
 jest.mock('jsonwebtoken', () => ({
-  sign: jest.fn()
+  sign: jest.fn(),
+  verify: jest.fn()
 }));
 
 const bcrypt = require('bcryptjs');
@@ -22,6 +23,8 @@ const jwt = require('jsonwebtoken');
 const UserModel = require('../models/userModel');
 const UserLoginHistoryModel = require('../models/userLoginHistoryModel');
 const AuthController = require('../controllers/authController');
+const UserLoginHistoryController = require('../controllers/userLoginHistoryController');
+const authMiddleware = require('../middleware/auth');
 
 function createResMock() {
   const res = {};
@@ -196,6 +199,62 @@ describe('Iterasi 2 - Autentikasi & Otorisasi', () => {
       });
     });
 
+    test('login berhasil menghasilkan accessToken', async () => {
+      UserModel.findByUsername.mockResolvedValue({
+        success: true,
+        data: {
+          id_user: 21,
+          nama_lengkap: 'Anisa',
+          username: 'anisar',
+          email: 'anisa@example.com',
+          password: 'hashed-password',
+          role: 'masyarakat'
+        }
+      });
+      bcrypt.compare.mockResolvedValue(true);
+      jwt.sign.mockReturnValue('token-abc');
+      UserLoginHistoryModel.createHistory.mockResolvedValue({ success: true });
+
+      const req = { body: { username: 'anisar', password: 'rahasia' } };
+      const res = createResMock();
+
+      await AuthController.login(req, res);
+
+      const response = res.json.mock.calls[0][0];
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(response.data.accessToken).toBe('token-abc');
+    });
+
+    test('response login mengandung user.id_user, username, email, dan role', async () => {
+      UserModel.findByUsername.mockResolvedValue({
+        success: true,
+        data: {
+          id_user: 21,
+          nama_lengkap: 'Anisa',
+          username: 'anisar',
+          email: 'anisa@example.com',
+          password: 'hashed-password',
+          role: 'masyarakat'
+        }
+      });
+      bcrypt.compare.mockResolvedValue(true);
+      jwt.sign.mockReturnValue('token-abc');
+      UserLoginHistoryModel.createHistory.mockResolvedValue({ success: true });
+
+      const req = { body: { username: 'anisar', password: 'rahasia' } };
+      const res = createResMock();
+
+      await AuthController.login(req, res);
+
+      const user = res.json.mock.calls[0][0].data.user;
+      expect(user).toEqual(expect.objectContaining({
+        id_user: 21,
+        username: 'anisar',
+        email: 'anisa@example.com',
+        role: 'masyarakat'
+      }));
+    });
+
     test.each([
       ['username kosong', { username: '', password: 'rahasia' }, ['Username minimal 4 karakter']],
       ['password kosong', { username: 'kcamat', password: '' }, ['Password minimal 4 karakter']]
@@ -270,6 +329,100 @@ describe('Iterasi 2 - Autentikasi & Otorisasi', () => {
       expect(res.json).toHaveBeenCalledWith({
         success: false,
         message: 'Username atau password salah'
+      });
+    });
+  });
+
+  describe('Logout', () => {
+    test('logout berhasil menghasilkan response success true', async () => {
+      UserLoginHistoryModel.createHistory.mockResolvedValue({ success: true });
+
+      const req = {
+        user: {
+          id_user: 21,
+          role: 'masyarakat'
+        }
+      };
+      const res = createResMock();
+
+      await UserLoginHistoryController.logout(req, res);
+
+      expect(UserLoginHistoryModel.createHistory).toHaveBeenCalledWith({
+        id_user: 21,
+        aktivitas: 'logout'
+      });
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json.mock.calls[0][0].success).toBe(true);
+    });
+
+    test('logout berhasil menghasilkan message Logout berhasil', async () => {
+      UserLoginHistoryModel.createHistory.mockResolvedValue({ success: true });
+
+      const req = {
+        user: {
+          id_user: 21,
+          role: 'masyarakat'
+        }
+      };
+      const res = createResMock();
+
+      await UserLoginHistoryController.logout(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        message: 'Logout berhasil',
+        data: null
+      });
+    });
+  });
+
+  describe('Token', () => {
+    test('token tidak valid menghasilkan status 401', () => {
+      jwt.verify.mockImplementation(() => {
+        throw new Error('invalid token');
+      });
+
+      const req = {
+        headers: {
+          authorization: 'Bearer token-tidak-valid'
+        }
+      };
+      const res = createResMock();
+      const next = jest.fn();
+
+      authMiddleware(req, res, next);
+
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Token tidak valid'
+      });
+    });
+
+    test('token expired menghasilkan status 401', () => {
+      jwt.verify.mockImplementation(() => {
+        const error = new Error('jwt expired');
+        error.name = 'TokenExpiredError';
+        throw error;
+      });
+
+      const req = {
+        headers: {
+          authorization: 'Bearer token-expired'
+        }
+      };
+      const res = createResMock();
+      const next = jest.fn();
+
+      authMiddleware(req, res, next);
+
+      expect(next).not.toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(401);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Token tidak valid'
       });
     });
   });
