@@ -1,5 +1,6 @@
 const RekomendasiPenelitianModel = require('../models/rekomendasiPenelitianModel');
 const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
+const { validateNameField } = require('../utils/nameValidation');
 const R = require('../utils/response');
 
 function getTokenUserId(req) {
@@ -15,9 +16,7 @@ class RekomendasiPenelitianController {
   static validateInput(data) {
     const errors = [];
 
-    if (!data.nama_peneliti || data.nama_peneliti.trim() === '') {
-      errors.push('nama_peneliti tidak boleh kosong');
-    }
+    validateNameField(errors, 'nama_peneliti', data.nama_peneliti);
 
     if (!data.instansi || data.instansi.trim() === '') {
       errors.push('instansi tidak boleh kosong');

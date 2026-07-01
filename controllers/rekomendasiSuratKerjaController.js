@@ -1,5 +1,6 @@
 const RekomendasiSuratKerjaModel = require('../models/rekomendasiSuratKerjaModel');
 const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
+const { validateNameField } = require('../utils/nameValidation');
 const R = require('../utils/response');
 
 function normalizeDigits(value) {
@@ -19,9 +20,7 @@ class RekomendasiSuratKerjaController {
   static validateInput(data) {
     const errors = [];
 
-    if (!data.nama_pemohon || data.nama_pemohon.trim() === '') {
-      errors.push('nama_pemohon tidak boleh kosong');
-    }
+    validateNameField(errors, 'nama_pemohon', data.nama_pemohon);
 
     if (!data.alamat || data.alamat.trim() === '') {
       errors.push('alamat tidak boleh kosong');

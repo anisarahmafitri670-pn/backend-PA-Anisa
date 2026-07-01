@@ -1,5 +1,6 @@
 const RekomendasiSuratYayasanModel = require('../models/rekomendasiSuratYayasanModel');
 const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
+const { validateNameField } = require('../utils/nameValidation');
 const R = require('../utils/response');
 
 function normalizeDigits(value) {
@@ -19,9 +20,7 @@ class RekomendasiSuratYayasanController {
   static validateInput(data) {
     const errors = [];
 
-    if (!data.nama_pemohon || data.nama_pemohon.trim() === '') {
-      errors.push('nama_pemohon tidak boleh kosong');
-    }
+    validateNameField(errors, 'nama_pemohon', data.nama_pemohon);
 
     const nik = normalizeDigits(data.nik);
     if (!nik) {
@@ -34,9 +33,7 @@ class RekomendasiSuratYayasanController {
       errors.push('jabatan tidak boleh kosong');
     }
 
-    if (!data.nama_lembaga || data.nama_lembaga.trim() === '') {
-      errors.push('nama_lembaga tidak boleh kosong');
-    }
+    validateNameField(errors, 'nama_lembaga', data.nama_lembaga);
 
     if (!data.alamat_lembaga || data.alamat_lembaga.trim() === '') {
       errors.push('alamat_lembaga tidak boleh kosong');

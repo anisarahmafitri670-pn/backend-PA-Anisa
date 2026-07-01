@@ -1,5 +1,6 @@
 const RekomendasiSuratAhliWarisModel = require('../models/rekomendasiSuratAhliWarisModel');
 const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
+const { validateNameField } = require('../utils/nameValidation');
 const R = require('../utils/response');
 
 function normalizeDigits(value) {
@@ -19,9 +20,7 @@ class RekomendasiSuratAhliWarisController {
   static validateInput(data) {
     const errors = [];
 
-    if (!data.nama_pewaris || data.nama_pewaris.trim() === '') {
-      errors.push('nama_pewaris tidak boleh kosong');
-    }
+    validateNameField(errors, 'nama_pewaris', data.nama_pewaris);
 
     const nikPewaris = normalizeDigits(data.nik_pewaris);
     if (!nikPewaris) {
@@ -34,9 +33,7 @@ class RekomendasiSuratAhliWarisController {
       errors.push('alamat_pewaris tidak boleh kosong');
     }
 
-    if (!data.nama_pemohon || data.nama_pemohon.trim() === '') {
-      errors.push('nama_pemohon tidak boleh kosong');
-    }
+    validateNameField(errors, 'nama_pemohon', data.nama_pemohon);
 
     const nikPemohon = normalizeDigits(data.nik_pemohon);
     if (!nikPemohon) {

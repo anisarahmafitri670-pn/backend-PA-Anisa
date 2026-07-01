@@ -1,5 +1,6 @@
 const RekomendasiSuratPindahModel = require('../models/rekomendasiSuratPindahModel');
 const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
+const { validateNameField } = require('../utils/nameValidation');
 const R = require('../utils/response');
 
 function getTokenUserId(req) {
@@ -15,9 +16,7 @@ class RekomendasiSuratPindahController {
   static validateInput(data) {
     const errors = [];
 
-    if (!data.nama_lengkap || data.nama_lengkap.trim() === '') {
-      errors.push('nama_lengkap tidak boleh kosong');
-    }
+    validateNameField(errors, 'nama_lengkap', data.nama_lengkap);
 
     if (!data.alamat_asal || data.alamat_asal.trim() === '') {
       errors.push('alamat_asal tidak boleh kosong');
