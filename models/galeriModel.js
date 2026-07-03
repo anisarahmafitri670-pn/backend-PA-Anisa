@@ -1,199 +1,127 @@
 const db = require('../config/db');
 
+const GALERI_FIELDS = `
+  id_galeri,
+  judul,
+  deskripsi_singkat,
+  deskripsi_detail,
+  tanggal_kegiatan,
+  lokasi,
+  foto_url,
+  tipe_tampilan,
+  urutan_tampil,
+  status_aktif,
+  created_by,
+  created_at,
+  updated_at
+`;
+
 class GaleriModel {
-  static async createGaleri(galeriData) {
-    try {
-      const query = `
-        INSERT INTO galeri
-        (id_user, judul, deskripsi, gambar, status)
-        VALUES (?, ?, ?, ?, ?)
-      `;
+  static async getPublicGaleri(tipeTampilan) {
+    const params = [];
+    let query = `
+      SELECT ${GALERI_FIELDS}
+      FROM galeri
+      WHERE status_aktif = 1
+    `;
 
-      const values = [
-        galeriData.id_user,
-        galeriData.judul,
-        galeriData.deskripsi,
-        galeriData.gambar,
-        galeriData.status
-      ];
-
-      const [result] = await db.execute(query, values);
-
-      return {
-        success: true,
-        id: result.insertId
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
+    if (tipeTampilan) {
+      query += ' AND tipe_tampilan = ?';
+      params.push(tipeTampilan);
     }
+
+    query += ' ORDER BY urutan_tampil ASC, created_at DESC';
+
+    const [rows] = await db.execute(query, params);
+    return rows;
   }
 
-  static async updateGaleri(idGaleri, galeriData) {
-    try {
-      const fields = [];
-      const values = [];
-
-      if (typeof galeriData.judul !== 'undefined') {
-        fields.push('judul = ?');
-        values.push(galeriData.judul);
-      }
-
-      if (typeof galeriData.deskripsi !== 'undefined') {
-        fields.push('deskripsi = ?');
-        values.push(galeriData.deskripsi);
-      }
-
-      if (typeof galeriData.gambar !== 'undefined') {
-        fields.push('gambar = ?');
-        values.push(galeriData.gambar);
-      }
-
-      if (typeof galeriData.status !== 'undefined') {
-        fields.push('status = ?');
-        values.push(galeriData.status);
-      }
-
-      if (fields.length === 0) {
-        return { success: false, error: 'Tidak ada data yang diupdate' };
-      }
-
-      fields.push('updated_at = CURRENT_TIMESTAMP');
-
-      const query = `
-        UPDATE galeri
-        SET ${fields.join(', ')}
-        WHERE id_galeri = ?
-      `;
-
-      values.push(idGaleri);
-
-      const [result] = await db.execute(query, values);
-
-      return {
-        success: true,
-        affectedRows: result.affectedRows
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
+  static async getAllAdmin() {
+    const [rows] = await db.execute(`
+      SELECT ${GALERI_FIELDS}
+      FROM galeri
+      ORDER BY urutan_tampil ASC, created_at DESC
+    `);
+    return rows;
   }
 
-  static async deleteGaleri(idGaleri) {
-    try {
-      const query = `
-        DELETE FROM galeri
-        WHERE id_galeri = ?
-      `;
-
-      const [result] = await db.execute(query, [idGaleri]);
-
-      return {
-        success: true,
-        affectedRows: result.affectedRows
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
+  static async getById(idGaleri) {
+    const [rows] = await db.execute(
+      `SELECT ${GALERI_FIELDS} FROM galeri WHERE id_galeri = ? LIMIT 1`,
+      [idGaleri]
+    );
+    return rows[0] || null;
   }
 
-  static async getAllGaleriPublik() {
-    try {
-      const query = `
-        SELECT id_galeri, judul, deskripsi, gambar, status, created_at, updated_at
-        FROM galeri
-        WHERE status = 'publish'
-        ORDER BY created_at DESC
-      `;
+  static async create(data) {
+    const [result] = await db.execute(
+      `INSERT INTO galeri (
+        judul,
+        deskripsi_singkat,
+        deskripsi_detail,
+        tanggal_kegiatan,
+        lokasi,
+        foto_url,
+        tipe_tampilan,
+        urutan_tampil,
+        status_aktif,
+        created_by
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        data.judul,
+        data.deskripsi_singkat,
+        data.deskripsi_detail,
+        data.tanggal_kegiatan,
+        data.lokasi,
+        data.foto_url,
+        data.tipe_tampilan,
+        data.urutan_tampil,
+        data.status_aktif,
+        data.created_by
+      ]
+    );
 
-      const [rows] = await db.execute(query);
-
-      return {
-        success: true,
-        data: rows
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
+    return result.insertId;
   }
 
-  static async getGaleriByIdPublik(idGaleri) {
-    try {
-      const query = `
-        SELECT id_galeri, judul, deskripsi, gambar, status, created_at, updated_at
-        FROM galeri
-        WHERE id_galeri = ? AND status = 'publish'
-        LIMIT 1
-      `;
+  static async update(idGaleri, data) {
+    const fields = [];
+    const values = [];
 
-      const [rows] = await db.execute(query, [idGaleri]);
+    Object.entries(data).forEach(([key, value]) => {
+      fields.push(`${key} = ?`);
+      values.push(value);
+    });
 
-      return {
-        success: true,
-        data: rows[0] || null
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
+    if (fields.length === 0) {
+      return { affectedRows: 0 };
     }
+
+    values.push(idGaleri);
+    const [result] = await db.execute(
+      `UPDATE galeri SET ${fields.join(', ')} WHERE id_galeri = ?`,
+      values
+    );
+
+    return result;
   }
 
-  static async getAllGaleriAdmin() {
-    try {
-      const query = `
-        SELECT id_galeri, id_user, judul, deskripsi, gambar, status, created_at, updated_at
-        FROM galeri
-        ORDER BY created_at DESC
-      `;
+  static async updateStatus(idGaleri, statusAktif) {
+    const [result] = await db.execute(
+      'UPDATE galeri SET status_aktif = ? WHERE id_galeri = ?',
+      [statusAktif, idGaleri]
+    );
 
-      const [rows] = await db.execute(query);
-
-      return {
-        success: true,
-        data: rows
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
+    return result;
   }
 
-  static async getGaleriById(idGaleri) {
-    try {
-      const query = `
-        SELECT id_galeri, id_user, judul, deskripsi, gambar, status, created_at, updated_at
-        FROM galeri
-        WHERE id_galeri = ?
-        LIMIT 1
-      `;
+  static async delete(idGaleri) {
+    const [result] = await db.execute(
+      'DELETE FROM galeri WHERE id_galeri = ?',
+      [idGaleri]
+    );
 
-      const [rows] = await db.execute(query, [idGaleri]);
-
-      return {
-        success: true,
-        data: rows[0] || null
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message
-      };
-    }
+    return result;
   }
 }
 

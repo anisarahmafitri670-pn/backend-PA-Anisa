@@ -3,8 +3,9 @@ const path = require('path');
 const multer = require('multer');
 
 const ALLOWED_MIME_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
 
-function fileExtension(mimeType) {
+function getExtension(mimeType) {
   if (mimeType === 'image/png') return '.png';
   if (mimeType === 'image/webp') return '.webp';
   return '.jpg';
@@ -12,7 +13,7 @@ function fileExtension(mimeType) {
 
 function fileFilter(req, file, cb) {
   if (!ALLOWED_MIME_TYPES.has(file.mimetype)) {
-    return cb(new Error('Format file tidak didukung. Hanya JPG, JPEG, PNG, dan WEBP.'));
+    return cb(new Error('Format file tidak didukung. Hanya JPG, PNG, dan WEBP.'));
   }
 
   return cb(null, true);
@@ -20,21 +21,18 @@ function fileFilter(req, file, cb) {
 
 const storage = multer.diskStorage({
   destination(req, file, cb) {
-    const baseDir = path.join(process.cwd(), 'uploads', 'galeri');
+    const uploadDir = path.join(process.cwd(), 'uploads', 'galeri');
+
     try {
-      fs.mkdirSync(baseDir, { recursive: true });
-      cb(null, baseDir);
+      fs.mkdirSync(uploadDir, { recursive: true });
+      cb(null, uploadDir);
     } catch (error) {
       cb(error);
     }
   },
   filename(req, file, cb) {
-    const judul = String(req.body.judul || 'galeri')
-      .trim()
-      .replace(/[^a-zA-Z0-9_\-]/g, '_')
-      .slice(0, 60);
-    const ext = fileExtension(file.mimetype);
-    cb(null, `${judul}_${Date.now()}${ext}`);
+    const random = Math.round(Math.random() * 1e9);
+    cb(null, `galeri-${Date.now()}-${random}${getExtension(file.mimetype)}`);
   }
 });
 
@@ -42,8 +40,26 @@ const uploadGaleri = multer({
   storage,
   fileFilter,
   limits: {
-    fileSize: 5 * 1024 * 1024
+    fileSize: MAX_FILE_SIZE
   }
 });
 
-module.exports = { uploadGaleri, ALLOWED_MIME_TYPES };
+function handleGaleriUpload(req, res, next) {
+  return uploadGaleri.single('foto')(req, res, (error) => {
+    if (!error) return next();
+
+    const message = error.code === 'LIMIT_FILE_SIZE'
+      ? 'Ukuran file maksimal 5 MB'
+      : error.message;
+
+    return res.status(400).json({
+      success: false,
+      message
+    });
+  });
+}
+
+module.exports = {
+  uploadGaleri,
+  handleGaleriUpload
+};
