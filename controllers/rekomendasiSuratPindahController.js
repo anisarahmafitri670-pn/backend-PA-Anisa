@@ -95,12 +95,13 @@ class RekomendasiSuratPindahController {
         return R.unauthorized(res, 'Token tidak valid');
       }
 
-      const result = await RekomendasiSuratPindahModel.getAllPengajuan(isPetugas(req) ? null : idUser);
+      const result = await RekomendasiSuratPindahModel.getAllPengajuan(isPetugas(req) ? null : idUser, req.query);
       if (result.success) {
-        return R.ok(
+        return R.okPaginated(
           res,
           'Berhasil mengambil data pengajuan rekomendasi surat pindah',
-          addNomorPengajuanToList(result.data, 'SP')
+          addNomorPengajuanToList(result.data, 'SP'),
+          result.pagination
         );
       }
 

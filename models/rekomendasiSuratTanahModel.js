@@ -1,4 +1,6 @@
 const db = require('../config/db');
+const { parsePagination, buildPagination } = require('../utils/pagination');
+const { buildPengajuanFilters } = require('../utils/pengajuanListFilters');
 // Konfigurasi koneksi MySQL
 class Database {
   // Simpan pengajuan rekomendasi surat tanah ke database
@@ -104,9 +106,37 @@ class Database {
   }
 
   // Ambil semua pengajuan rekomendasi surat tanah
-  static async getAllPengajuan(idUser = null) {
+  static async getAllPengajuan(idUser = null, paginationOptions = null) {
     try {
-      const whereClause = idUser ? 'WHERE id_user = ?' : '';
+      const { whereClause, values } = buildPengajuanFilters({
+        idUser,
+        query: paginationOptions || {},
+        keywordColumns: ['nama_pemohon', 'alamat', 'nik', 'no_hp']
+      });
+
+      if (paginationOptions) {
+        const { page, limit, offset } = parsePagination(paginationOptions);
+        const [countRows] = await db.execute(
+          `SELECT COUNT(*) AS total FROM rekomendasi_surat_tanah ${whereClause}`,
+          values
+        );
+
+        const [rows] = await db.execute(
+          `
+            SELECT * FROM rekomendasi_surat_tanah
+            ${whereClause}
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?
+          `,
+          [...values, limit, offset]
+        );
+
+        return {
+          success: true,
+          data: rows,
+          pagination: buildPagination(countRows[0].total, page, limit, rows.length)
+        };
+      }
 
       const query = `
         SELECT * FROM rekomendasi_surat_tanah
@@ -114,7 +144,6 @@ class Database {
         ORDER BY created_at DESC
       `;
 
-      const values = idUser ? [idUser] : [];
       const [rows] = await db.execute(query, values);
 
       return {

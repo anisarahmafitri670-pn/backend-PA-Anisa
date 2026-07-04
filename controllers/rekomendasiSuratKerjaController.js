@@ -100,12 +100,13 @@ class RekomendasiSuratKerjaController {
         return R.unauthorized(res, 'Token tidak valid');
       }
 
-      const result = await RekomendasiSuratKerjaModel.getAllPengajuan(isPetugas(req) ? null : idUser);
+      const result = await RekomendasiSuratKerjaModel.getAllPengajuan(isPetugas(req) ? null : idUser, req.query);
       if (result.success) {
-        return R.ok(
+        return R.okPaginated(
           res,
           'Berhasil mengambil data pengajuan rekomendasi surat kerja',
-          addNomorPengajuanToList(result.data, 'RK')
+          addNomorPengajuanToList(result.data, 'RK'),
+          result.pagination
         );
       }
 

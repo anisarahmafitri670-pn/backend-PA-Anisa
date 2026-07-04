@@ -118,12 +118,13 @@ class RekomendasiSuratAhliWarisController {
         return R.unauthorized(res, 'Token tidak valid');
       }
 
-      const result = await RekomendasiSuratAhliWarisModel.getAllPengajuan(isPetugas(req) ? null : idUser);
+      const result = await RekomendasiSuratAhliWarisModel.getAllPengajuan(isPetugas(req) ? null : idUser, req.query);
       if (result.success) {
-        return R.ok(
+        return R.okPaginated(
           res,
           'Berhasil mengambil data pengajuan rekomendasi surat ahli waris',
-          addNomorPengajuanToList(result.data, 'AW')
+          addNomorPengajuanToList(result.data, 'AW'),
+          result.pagination
         );
       }
 

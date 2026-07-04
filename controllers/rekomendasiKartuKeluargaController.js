@@ -95,12 +95,13 @@ class RekomendasiKartuKeluargaController {
         return R.unauthorized(res, 'Token tidak valid');
       }
 
-      const result = await RekomendasiKartuKeluargaModel.getAllPengajuan(isPetugas(req) ? null : idUser);
+      const result = await RekomendasiKartuKeluargaModel.getAllPengajuan(isPetugas(req) ? null : idUser, req.query);
       if (result.success) {
-        return R.ok(
+        return R.okPaginated(
           res,
           'Berhasil mengambil data pengajuan rekomendasi kartu keluarga',
-          addNomorPengajuanToList(result.data, 'KK')
+          addNomorPengajuanToList(result.data, 'KK'),
+          result.pagination
         );
       }
 

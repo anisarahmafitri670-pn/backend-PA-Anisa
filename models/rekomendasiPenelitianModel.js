@@ -1,4 +1,6 @@
 const db = require('../config/db');
+const { parsePagination, buildPagination } = require('../utils/pagination');
+const { buildPengajuanFilters } = require('../utils/pengajuanListFilters');
 // Konfigurasi koneksi MySQL
 class Database {
   // Simpan data rekomendasi penelitian ke database
@@ -107,9 +109,37 @@ class Database {
   }
 
   // Ambil semua rekomendasi penelitian
-  static async getAllRekomendasi(idUser = null) {
+  static async getAllRekomendasi(idUser = null, paginationOptions = null) {
     try {
-      const whereClause = idUser ? 'WHERE id_user = ?' : '';
+      const { whereClause, values } = buildPengajuanFilters({
+        idUser,
+        query: paginationOptions || {},
+        keywordColumns: ['nama_peneliti', 'instansi', 'topik_penelitian', 'lokasi_penelitian']
+      });
+
+      if (paginationOptions) {
+        const { page, limit, offset } = parsePagination(paginationOptions);
+        const [countRows] = await db.execute(
+          `SELECT COUNT(*) AS total FROM rekomendasi_penelitian ${whereClause}`,
+          values
+        );
+
+        const [rows] = await db.execute(
+          `
+            SELECT * FROM rekomendasi_penelitian
+            ${whereClause}
+            ORDER BY created_at DESC
+            LIMIT ? OFFSET ?
+          `,
+          [...values, limit, offset]
+        );
+
+        return {
+          success: true,
+          data: rows,
+          pagination: buildPagination(countRows[0].total, page, limit, rows.length)
+        };
+      }
 
       const query = `
         SELECT * FROM rekomendasi_penelitian 
@@ -117,7 +147,6 @@ class Database {
         ORDER BY created_at DESC
       `;
 
-      const values = idUser ? [idUser] : [];
       const [rows] = await db.execute(query, values);
 
       return {

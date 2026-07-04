@@ -95,12 +95,13 @@ class RekomendasiSuratTanahController {
         return R.unauthorized(res, 'Token tidak valid');
       }
 
-      const result = await RekomendasiSuratTanahModel.getAllPengajuan(isPetugas(req) ? null : idUser);
+      const result = await RekomendasiSuratTanahModel.getAllPengajuan(isPetugas(req) ? null : idUser, req.query);
       if (result.success) {
-        return R.ok(
+        return R.okPaginated(
           res,
           'Berhasil mengambil data pengajuan rekomendasi surat tanah',
-          addNomorPengajuanToList(result.data, 'ST')
+          addNomorPengajuanToList(result.data, 'ST'),
+          result.pagination
         );
       }
 

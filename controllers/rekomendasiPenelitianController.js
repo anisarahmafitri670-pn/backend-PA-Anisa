@@ -95,12 +95,13 @@ class RekomendasiPenelitianController {
         return R.unauthorized(res, 'Token tidak valid');
       }
 
-      const result = await RekomendasiPenelitianModel.getAllRekomendasi(isPetugas(req) ? null : idUser);
+      const result = await RekomendasiPenelitianModel.getAllRekomendasi(isPetugas(req) ? null : idUser, req.query);
       if (result.success) {
-        return R.ok(
+        return R.okPaginated(
           res,
           'Berhasil mengambil data rekomendasi penelitian',
-          addNomorPengajuanToList(result.data, 'RP')
+          addNomorPengajuanToList(result.data, 'RP'),
+          result.pagination
         );
       }
 

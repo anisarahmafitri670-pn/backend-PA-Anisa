@@ -102,14 +102,15 @@ class RekomendasiSuratYayasanController {
       const petugasMode = isPetugas(req);
       console.log('[YAYASAN] petugasMode:', petugasMode);
 
-      const result = await RekomendasiSuratYayasanModel.getAllPengajuan(petugasMode ? null : idUser);
+      const result = await RekomendasiSuratYayasanModel.getAllPengajuan(petugasMode ? null : idUser, req.query);
       console.log('[YAYASAN] hasil model:', result);
 
       if (result.success) {
-        return R.ok(
+        return R.okPaginated(
           res,
           'Berhasil mengambil data pengajuan rekomendasi surat yayasan',
-          addNomorPengajuanToList(result.data, 'SY')
+          addNomorPengajuanToList(result.data, 'SY'),
+          result.pagination
         );
       }
 

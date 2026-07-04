@@ -1,5 +1,6 @@
 const R = require('../utils/response');
 const KepalaCamatLaporanModel = require('../models/kepalaCamatLaporanModel');
+const { paginateArray } = require('../utils/pagination');
 
 const STATUS_ORDER = ['menunggu_verifikasi', 'verifikasi', 'diproses', 'selesai', 'ditolak'];
 
@@ -285,7 +286,12 @@ class KepalaCamatController {
         }
       });
 
-      return R.ok(res, 'Data dashboard kepala camat berhasil diambil', {
+      const paginatedLatest = paginateArray(sorted, req.query);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Data dashboard kepala camat berhasil diambil',
+        data: {
         total_pengajuan: normalized.length,
         menunggu_verifikasi: statusCounter.menunggu_verifikasi,
         verifikasi: statusCounter.verifikasi,
@@ -293,7 +299,9 @@ class KepalaCamatController {
         selesai: statusCounter.selesai,
         ditolak: statusCounter.ditolak,
         rekap_layanan: buildRekapLayanan(normalized),
-        pengajuan_terbaru: sorted.slice(0, 10)
+          pengajuan_terbaru: paginatedLatest.data
+        },
+        pagination: paginatedLatest.pagination
       });
     } catch (error) {
       return res.status(500).json({
@@ -326,11 +334,18 @@ class KepalaCamatController {
         }
       });
 
-      return R.ok(res, 'Data laporan berhasil diambil', {
+      const paginated = paginateArray(filtered, req.query);
+
+      return res.status(200).json({
+        success: true,
+        message: 'Data laporan berhasil diambil',
+        data: {
         total_pengajuan: filtered.length,
         rekap_status: rekapStatus,
         rekap_layanan: buildRekapLayanan(filtered),
-        daftar_pengajuan: filtered
+          daftar_pengajuan: paginated.data
+        },
+        pagination: paginated.pagination
       });
     } catch (error) {
       return res.status(500).json({

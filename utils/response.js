@@ -24,5 +24,8 @@ function serverError(res, message = 'Terjadi kesalahan pada server') {
   return res.status(500).json({ success: false, message });
 }
 
-module.exports = { ok, created, badRequest, unauthorized, notFound, serverError };
+function okPaginated(res, message = 'OK', data = [], pagination = null) {
+  return res.status(200).json({ success: true, message, data, pagination });
+}
 
+module.exports = { ok, created, badRequest, unauthorized, notFound, serverError, okPaginated };
