@@ -11,7 +11,8 @@ const testFiles = [
   'tests/iterasi1-pengajuan-surat-ahli-waris.test.js',
   'tests/iterasi1-pengajuan-surat-yayasan.test.js',
   'tests/iterasi2-auth.test.js',
-  'tests/iterasi3-upload-dokumen.test.js'
+  'tests/iterasi3-upload-dokumen.test.js',
+  'tests/iterasi4-tracking-status.test.js'
 ];
 
 const jestBin = path.join(__dirname, '..', 'node_modules', 'jest', 'bin', 'jest.js');
