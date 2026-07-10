@@ -22,7 +22,13 @@ class UserLoginHistoryController {
         return R.serverError(res, 'Gagal menyimpan history logout');
       }
 
-      return R.ok(res, 'Logout berhasil', null);
+      return R.ok(res, 'Logout berhasil', {
+        id_user: idUser,
+        username: req.user.username || null,
+        role: req.user.role || null,
+        aktivitas: 'logout',
+        waktu: result.data ? result.data.waktu : null
+      });
     } catch (error) {
       return R.serverError(res);
     }
