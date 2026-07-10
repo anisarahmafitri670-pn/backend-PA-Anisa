@@ -120,9 +120,11 @@ class ProfileController {
         return R.notFound(res, 'User tidak ditemukan');
       }
 
-      return R.serverError(res, 'Gagal memperbarui profil');
+      console.error('Update profile error:', result.error);
+      return R.serverError(res, result.error || 'Gagal memperbarui profil');
     } catch (error) {
-      return R.serverError(res);
+      console.error('Update profile exception:', error);
+      return R.serverError(res, error.message || 'Terjadi kesalahan pada server');
     }
   }
 
@@ -166,9 +168,11 @@ class ProfileController {
         return R.notFound(res, 'User tidak ditemukan');
       }
 
-      return R.serverError(res, 'Gagal memperbarui avatar');
+      console.error('Update avatar error:', result.error);
+      return R.serverError(res, result.error || 'Gagal memperbarui avatar');
     } catch (error) {
-      return R.serverError(res);
+      console.error('Update avatar exception:', error);
+      return R.serverError(res, error.message || 'Terjadi kesalahan pada server');
     }
   }
 
