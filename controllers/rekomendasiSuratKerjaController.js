@@ -2,6 +2,7 @@ const RekomendasiSuratKerjaModel = require('../models/rekomendasiSuratKerjaModel
 const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
 const { validateNameField } = require('../utils/nameValidation');
 const R = require('../utils/response');
+const { normalizePengajuanRow } = require('../utils/pengajuanLayanan');
 
 function normalizeDigits(value) {
   return String(value || '').replace(/\D/g, '');
@@ -105,7 +106,7 @@ class RekomendasiSuratKerjaController {
         return R.okPaginated(
           res,
           'Berhasil mengambil data pengajuan rekomendasi surat kerja',
-          addNomorPengajuanToList(result.data, 'RK'),
+          addNomorPengajuanToList(result.data.map((row) => normalizePengajuanRow(req, 'rekomendasi_surat_kerja', row)), 'RK'),
           result.pagination
         );
       }
@@ -131,7 +132,7 @@ class RekomendasiSuratKerjaController {
 
       const result = await RekomendasiSuratKerjaModel.getPengajuanById(id, isPetugas(req) ? null : idUser);
       if (result.success && result.data) {
-        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat kerja', result.data);
+        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat kerja', normalizePengajuanRow(req, 'rekomendasi_surat_kerja', result.data));
       }
 
       if (result.success && !result.data) {

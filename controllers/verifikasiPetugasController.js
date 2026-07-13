@@ -1,5 +1,7 @@
 const VerifikasiPetugasModel = require('../models/verifikasiPetugasModel');
+const PengajuanStatusModel = require('../models/pengajuanStatusModel');
 const R = require('../utils/response');
+const { normalizePengajuanRow } = require('../utils/pengajuanLayanan');
 
 function getIdPengajuan(req) {
   const idPengajuan = parseInt(req.params.id, 10);
@@ -98,15 +100,15 @@ class VerifikasiPetugasController {
       }
 
       const filePath = `/uploads/surat-hasil/${req.file.filename}`;
-      const result = await VerifikasiPetugasModel.uploadSuratHasil(
-        req.layanan,
+      const result = await PengajuanStatusModel.uploadSuratHasil(
         idPengajuan,
+        req.layanan,
         filePath,
         req.file.originalname
       );
 
       if (result.success && result.affectedRows > 0) {
-        return R.ok(res, 'Surat hasil berhasil diunggah', null);
+        return R.ok(res, 'Surat hasil berhasil diunggah', normalizePengajuanRow(req, result.layanan, result.data));
       }
 
       if (result.success && result.affectedRows === 0) {

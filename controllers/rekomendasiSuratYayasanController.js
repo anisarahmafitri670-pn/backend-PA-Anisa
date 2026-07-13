@@ -2,6 +2,7 @@ const RekomendasiSuratYayasanModel = require('../models/rekomendasiSuratYayasanM
 const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
 const { validateNameField } = require('../utils/nameValidation');
 const R = require('../utils/response');
+const { normalizePengajuanRow } = require('../utils/pengajuanLayanan');
 
 function normalizeDigits(value) {
   return String(value || '').replace(/\D/g, '');
@@ -109,7 +110,7 @@ class RekomendasiSuratYayasanController {
         return R.okPaginated(
           res,
           'Berhasil mengambil data pengajuan rekomendasi surat yayasan',
-          addNomorPengajuanToList(result.data, 'SY'),
+          addNomorPengajuanToList(result.data.map((row) => normalizePengajuanRow(req, 'rekomendasi_surat_yayasan', row)), 'SY'),
           result.pagination
         );
       }
@@ -145,7 +146,7 @@ class RekomendasiSuratYayasanController {
 
       const result = await RekomendasiSuratYayasanModel.getPengajuanById(id, isPetugas(req) ? null : idUser);
       if (result.success && result.data) {
-        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat yayasan', result.data);
+        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat yayasan', normalizePengajuanRow(req, 'rekomendasi_surat_yayasan', result.data));
       }
 
       if (result.success && !result.data) {

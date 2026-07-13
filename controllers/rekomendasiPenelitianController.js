@@ -2,6 +2,7 @@ const RekomendasiPenelitianModel = require('../models/rekomendasiPenelitianModel
 const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
 const { validateNameField } = require('../utils/nameValidation');
 const R = require('../utils/response');
+const { normalizePengajuanRow } = require('../utils/pengajuanLayanan');
 
 function getTokenUserId(req) {
   return req.user && req.user.id_user ? Number(req.user.id_user) : null;
@@ -100,7 +101,7 @@ class RekomendasiPenelitianController {
         return R.okPaginated(
           res,
           'Berhasil mengambil data rekomendasi penelitian',
-          addNomorPengajuanToList(result.data, 'RP'),
+          addNomorPengajuanToList(result.data.map((row) => normalizePengajuanRow(req, 'rekomendasi_penelitian', row)), 'RP'),
           result.pagination
         );
       }
@@ -126,7 +127,7 @@ class RekomendasiPenelitianController {
 
       const result = await RekomendasiPenelitianModel.getRekomendasiById(id, isPetugas(req) ? null : idUser);
       if (result.success && result.data) {
-        return R.ok(res, 'Berhasil mengambil data rekomendasi penelitian', result.data);
+        return R.ok(res, 'Berhasil mengambil data rekomendasi penelitian', normalizePengajuanRow(req, 'rekomendasi_penelitian', result.data));
       }
 
       if (result.success && !result.data) {

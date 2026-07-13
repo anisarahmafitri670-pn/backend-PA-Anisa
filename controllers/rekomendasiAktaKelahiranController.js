@@ -2,6 +2,7 @@ const RekomendasiAktaKelahiranModel = require('../models/rekomendasiAktaKelahira
 const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
 const { validateNameField } = require('../utils/nameValidation');
 const R = require('../utils/response');
+const { normalizePengajuanRow } = require('../utils/pengajuanLayanan');
 
 function normalizeDigits(value) {
   return String(value || '').replace(/\D/g, '');
@@ -100,7 +101,7 @@ class RekomendasiAktaKelahiranController {
         return R.okPaginated(
           res,
           'Berhasil mengambil data pengajuan rekomendasi akta kelahiran',
-          addNomorPengajuanToList(result.data, 'AK'),
+          addNomorPengajuanToList(result.data.map((row) => normalizePengajuanRow(req, 'rekomendasi_akta_kelahiran', row)), 'AK'),
           result.pagination
         );
       }
@@ -126,7 +127,7 @@ class RekomendasiAktaKelahiranController {
 
       const result = await RekomendasiAktaKelahiranModel.getPengajuanById(id, isPetugas(req) ? null : idUser);
       if (result.success && result.data) {
-        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi akta kelahiran', result.data);
+        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi akta kelahiran', normalizePengajuanRow(req, 'rekomendasi_akta_kelahiran', result.data));
       }
 
       if (result.success && !result.data) {

@@ -2,6 +2,7 @@ const RekomendasiSuratTanahModel = require('../models/rekomendasiSuratTanahModel
 const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
 const { validateNameField } = require('../utils/nameValidation');
 const R = require('../utils/response');
+const { normalizePengajuanRow } = require('../utils/pengajuanLayanan');
 
 function normalizeDigits(value) {
   return String(value || '').replace(/\D/g, '');
@@ -100,7 +101,7 @@ class RekomendasiSuratTanahController {
         return R.okPaginated(
           res,
           'Berhasil mengambil data pengajuan rekomendasi surat tanah',
-          addNomorPengajuanToList(result.data, 'ST'),
+          addNomorPengajuanToList(result.data.map((row) => normalizePengajuanRow(req, 'rekomendasi_surat_tanah', row)), 'ST'),
           result.pagination
         );
       }
@@ -126,7 +127,7 @@ class RekomendasiSuratTanahController {
 
       const result = await RekomendasiSuratTanahModel.getPengajuanById(id, isPetugas(req) ? null : idUser);
       if (result.success && result.data) {
-        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat tanah', result.data);
+        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat tanah', normalizePengajuanRow(req, 'rekomendasi_surat_tanah', result.data));
       }
 
       if (result.success && !result.data) {

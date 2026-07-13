@@ -23,7 +23,7 @@ class Database {
       ];
 
       const [result] = await db.execute(query, values);
-
+_
       return {
         success: true,
         id: result.insertId,

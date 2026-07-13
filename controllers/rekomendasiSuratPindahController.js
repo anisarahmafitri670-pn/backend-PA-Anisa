@@ -2,6 +2,7 @@ const RekomendasiSuratPindahModel = require('../models/rekomendasiSuratPindahMod
 const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
 const { validateNameField } = require('../utils/nameValidation');
 const R = require('../utils/response');
+const { normalizePengajuanRow } = require('../utils/pengajuanLayanan');
 
 function getTokenUserId(req) {
   return req.user && req.user.id_user ? Number(req.user.id_user) : null;
@@ -100,7 +101,7 @@ class RekomendasiSuratPindahController {
         return R.okPaginated(
           res,
           'Berhasil mengambil data pengajuan rekomendasi surat pindah',
-          addNomorPengajuanToList(result.data, 'SP'),
+          addNomorPengajuanToList(result.data.map((row) => normalizePengajuanRow(req, 'rekomendasi_surat_pindah', row)), 'SP'),
           result.pagination
         );
       }
@@ -126,7 +127,7 @@ class RekomendasiSuratPindahController {
 
       const result = await RekomendasiSuratPindahModel.getPengajuanById(id, isPetugas(req) ? null : idUser);
       if (result.success && result.data) {
-        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat pindah', result.data);
+        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat pindah', normalizePengajuanRow(req, 'rekomendasi_surat_pindah', result.data));
       }
 
       if (result.success && !result.data) {

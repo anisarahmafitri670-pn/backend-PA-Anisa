@@ -100,12 +100,15 @@ class VerifikasiPetugasModel {
         return { success: false, error: 'Layanan tidak valid' };
       }
 
+      const [uploadedAtColumns] = await db.execute(`SHOW COLUMNS FROM ${tableName} LIKE ?`, ['uploaded_surat_hasil_at']);
+      const hasUploadedAt = uploadedAtColumns.length > 0;
+      const uploadedAtSql = hasUploadedAt ? ', uploaded_surat_hasil_at = NOW()' : '';
       const query = `
         UPDATE ${tableName}
-        SET file_surat_hasil = ?, nama_file_surat_hasil = ?
+        SET status = ?, file_surat_hasil = ?, nama_file_surat_hasil = ?${uploadedAtSql}
         WHERE id_pengajuan = ?
       `;
-      const [result] = await db.execute(query, [filePath, originalName, idPengajuan]);
+      const [result] = await db.execute(query, ['Selesai', filePath, originalName, idPengajuan]);
       return { success: true, affectedRows: result.affectedRows };
     } catch (error) {
       return { success: false, error: error.message };

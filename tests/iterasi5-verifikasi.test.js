@@ -2,12 +2,16 @@ jest.mock('../models/verifikasiPetugasModel', () => ({
   verifikasi: jest.fn(),
   diproses: jest.fn(),
   ditolak: jest.fn(),
-  uploadSuratHasil: jest.fn(),
   selesai: jest.fn()
+}));
+
+jest.mock('../models/pengajuanStatusModel', () => ({
+  uploadSuratHasil: jest.fn()
 }));
 
 const VerifikasiPetugasController = require('../controllers/verifikasiPetugasController');
 const VerifikasiPetugasModel = require('../models/verifikasiPetugasModel');
+const PengajuanStatusModel = require('../models/pengajuanStatusModel');
 
 function createResMock() {
   const res = {};
@@ -18,6 +22,8 @@ function createResMock() {
 
 function createReq(overrides = {}) {
   return {
+    protocol: 'http',
+    get: jest.fn().mockReturnValue('localhost:3000'),
     layanan: 'rekomendasi_surat_kerja',
     params: { id: '40' },
     body: {},
@@ -132,9 +138,16 @@ describe('Iterasi 5 - Verifikasi Pengajuan Petugas', () => {
   });
 
   test('petugas berhasil upload surat hasil jika file tersedia', async () => {
-    VerifikasiPetugasModel.uploadSuratHasil.mockResolvedValue({
+    PengajuanStatusModel.uploadSuratHasil.mockResolvedValue({
       success: true,
-      affectedRows: 1
+      affectedRows: 1,
+      layanan: 'rekomendasi_surat_kerja',
+      data: {
+        id_pengajuan: 40,
+        status: 'Selesai',
+        file_surat_hasil: '/uploads/surat-hasil/surat_hasil_40.pdf',
+        nama_file_surat_hasil: 'Surat Hasil.pdf'
+      }
     });
 
     const req = createReq({
@@ -147,18 +160,17 @@ describe('Iterasi 5 - Verifikasi Pengajuan Petugas', () => {
 
     await VerifikasiPetugasController.uploadSuratHasil(req, res);
 
-    expect(VerifikasiPetugasModel.uploadSuratHasil).toHaveBeenCalledWith(
-      'rekomendasi_surat_kerja',
+    expect(PengajuanStatusModel.uploadSuratHasil).toHaveBeenCalledWith(
       40,
+      'rekomendasi_surat_kerja',
       '/uploads/surat-hasil/surat_hasil_40.pdf',
       'Surat Hasil.pdf'
     );
     expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith({
-      success: true,
-      message: 'Surat hasil berhasil diunggah',
-      data: null
-    });
+    expect(res.json.mock.calls[0][0].success).toBe(true);
+    expect(res.json.mock.calls[0][0].message).toBe('Surat hasil berhasil diunggah');
+    expect(res.json.mock.calls[0][0].data.status_pengajuan).toBe('Selesai');
+    expect(res.json.mock.calls[0][0].data.file_surat_hasil).toBe('/uploads/surat-hasil/surat_hasil_40.pdf');
   });
 
   test('request gagal jika status tidak valid', async () => {

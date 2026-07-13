@@ -2,6 +2,7 @@ const RekomendasiSuratAhliWarisModel = require('../models/rekomendasiSuratAhliWa
 const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
 const { validateNameField } = require('../utils/nameValidation');
 const R = require('../utils/response');
+const { normalizePengajuanRow } = require('../utils/pengajuanLayanan');
 
 function normalizeDigits(value) {
   return String(value || '').replace(/\D/g, '');
@@ -123,7 +124,7 @@ class RekomendasiSuratAhliWarisController {
         return R.okPaginated(
           res,
           'Berhasil mengambil data pengajuan rekomendasi surat ahli waris',
-          addNomorPengajuanToList(result.data, 'AW'),
+          addNomorPengajuanToList(result.data.map((row) => normalizePengajuanRow(req, 'rekomendasi_surat_ahli_waris', row)), 'AW'),
           result.pagination
         );
       }
@@ -149,7 +150,7 @@ class RekomendasiSuratAhliWarisController {
 
       const result = await RekomendasiSuratAhliWarisModel.getPengajuanById(id, isPetugas(req) ? null : idUser);
       if (result.success && result.data) {
-        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat ahli waris', result.data);
+        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi surat ahli waris', normalizePengajuanRow(req, 'rekomendasi_surat_ahli_waris', result.data));
       }
 
       if (result.success && !result.data) {

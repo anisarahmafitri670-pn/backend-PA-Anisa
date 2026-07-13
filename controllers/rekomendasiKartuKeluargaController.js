@@ -2,6 +2,7 @@ const RekomendasiKartuKeluargaModel = require('../models/rekomendasiKartuKeluarg
 const { addNomorPengajuanToList } = require('../utils/nomorPengajuan');
 const { validateNameField } = require('../utils/nameValidation');
 const R = require('../utils/response');
+const { normalizePengajuanRow } = require('../utils/pengajuanLayanan');
 
 function normalizeDigits(value) {
   return String(value || '').replace(/\D/g, '');
@@ -100,7 +101,7 @@ class RekomendasiKartuKeluargaController {
         return R.okPaginated(
           res,
           'Berhasil mengambil data pengajuan rekomendasi kartu keluarga',
-          addNomorPengajuanToList(result.data, 'KK'),
+          addNomorPengajuanToList(result.data.map((row) => normalizePengajuanRow(req, 'rekomendasi_kartu_keluarga', row)), 'KK'),
           result.pagination
         );
       }
@@ -126,7 +127,7 @@ class RekomendasiKartuKeluargaController {
 
       const result = await RekomendasiKartuKeluargaModel.getPengajuanById(id, isPetugas(req) ? null : idUser);
       if (result.success && result.data) {
-        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi kartu keluarga', result.data);
+        return R.ok(res, 'Berhasil mengambil data pengajuan rekomendasi kartu keluarga', normalizePengajuanRow(req, 'rekomendasi_kartu_keluarga', result.data));
       }
 
       if (result.success && !result.data) {
