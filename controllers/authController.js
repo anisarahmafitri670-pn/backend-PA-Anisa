@@ -89,10 +89,9 @@ class AuthController {
       return R.serverError(res);
     }
   }
-_
   static async login(req, res) {
     try {
-      const username = normalizeUsername(req.body.username);S
+      const username = normalizeUsername(req.body.username);
       const password = req.body.password || '';
       const errors = [];
 
