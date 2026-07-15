@@ -78,13 +78,22 @@ class VerifikasiPetugasController {
         return R.badRequest(res, 'catatan_petugas wajib diisi');
       }
 
-      const result = await VerifikasiPetugasModel.ditolak(req.layanan, idPengajuan, catatanPetugas);
-      if (result.success && result.affectedRows > 0) {
-        return R.ok(res, 'Pengajuan ditolak', null);
+      const result = await PengajuanStatusModel.updateStatus(
+        idPengajuan,
+        req.layanan,
+        'Ditolak',
+        catatanPetugas
+      );
+      if (result.success && result.data) {
+        return R.ok(res, 'Pengajuan ditolak', normalizePengajuanRow(req, result.layanan, result.data));
       }
 
-      if (result.success && result.affectedRows === 0) {
+      if (result.code === 'NOT_FOUND') {
         return R.notFound(res, 'Pengajuan tidak ditemukan');
+      }
+
+      if (result.code === 'AMBIGUOUS') {
+        return R.badRequest(res, 'ID pengajuan ditemukan di lebih dari satu layanan, gunakan endpoint layanan yang spesifik');
       }
 
       return R.serverError(res, 'Gagal menolak pengajuan');
