@@ -13,7 +13,8 @@ function getTokenUserId(req) {
 }
 
 function isPetugas(req) {
-  return req.user && req.user.role === 'petugas';
+  const role = String(req.user?.role || '').toLowerCase();
+  return role === 'petugas' || role === 'kepala camat';
 }
 
 class RekomendasiSuratKerjaController {
