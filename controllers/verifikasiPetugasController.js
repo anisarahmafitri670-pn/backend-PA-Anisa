@@ -42,17 +42,22 @@ class VerifikasiPetugasController {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
 
-      const result = await VerifikasiPetugasModel.diproses(
-        req.layanan,
+      const result = await PengajuanStatusModel.updateStatus(
         idPengajuan,
+        req.layanan,
+        'Diproses',
         getCatatanPetugas(req)
       );
-      if (result.success && result.affectedRows > 0) {
-        return R.ok(res, 'Pengajuan sedang diproses', null);
+      if (result.success && result.data) {
+        return R.ok(res, 'Pengajuan sedang diproses', normalizePengajuanRow(req, result.layanan, result.data));
       }
 
-      if (result.success && result.affectedRows === 0) {
+      if (result.code === 'NOT_FOUND') {
         return R.notFound(res, 'Pengajuan tidak ditemukan');
+      }
+
+      if (result.code === 'AMBIGUOUS') {
+        return R.badRequest(res, 'ID pengajuan ditemukan di lebih dari satu layanan, gunakan endpoint layanan yang spesifik');
       }
 
       return R.serverError(res, 'Gagal memproses pengajuan');

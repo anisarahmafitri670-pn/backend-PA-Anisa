@@ -203,7 +203,11 @@ class PengajuanStatusController {
       return R.ok(res, 'Surat hasil berhasil diunggah', normalizePengajuanRow(req, result.layanan, result.data));
     } catch (error) {
       logEndpointError('[upload-surat-hasil:error]', req, error);
-      return R.serverError(res);
+      return res.status(500).json({
+        success: false,
+        message: 'Gagal upload surat hasil',
+        error: error.message
+      });
     }
   }
 
