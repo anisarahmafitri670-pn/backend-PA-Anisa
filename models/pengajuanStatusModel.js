@@ -22,7 +22,7 @@ async function findInTable(layanan, idPengajuan) {
   }
 
   const [rows] = await db.execute(
-    `SELECT * FROM ${config.table} WHERE id_pengajuan = ? LIMIT 1`,
+    `SELECT * FROM ${config.table} WHERE ${config.primaryKey} = ? LIMIT 1`,
     [idPengajuan]
   );
 
@@ -72,17 +72,17 @@ class PengajuanStatusModel {
       return { success: false, code: 'AMBIGUOUS' };
     }
 
-    const setParts = ['status = ?'];
+    const setParts = [`${target.config.statusColumn} = ?`];
     const values = [normalizedStatus];
 
     if (catatanPetugas !== undefined) {
-      setParts.push('catatan_petugas = ?');
+      setParts.push(`${target.config.catatanColumn} = ?`);
       values.push(catatanPetugas || null);
     }
 
     values.push(idPengajuan);
     const [result] = await db.execute(
-      `UPDATE ${target.config.table} SET ${setParts.join(', ')} WHERE id_pengajuan = ?`,
+      `UPDATE ${target.config.table} SET ${setParts.join(', ')} WHERE ${target.config.primaryKey} = ?`,
       values
     );
 
@@ -105,19 +105,19 @@ class PengajuanStatusModel {
     }
 
     const setParts = [
-      'status = ?',
-      'file_surat_hasil = ?',
-      'nama_file_surat_hasil = ?'
+      `${target.config.statusColumn} = ?`,
+      `${target.config.fileSuratHasilColumn} = ?`,
+      `${target.config.namaFileSuratHasilColumn} = ?`
     ];
     const values = ['Selesai', filePath, originalName];
 
-    if (await tableHasColumn(target.config.table, 'uploaded_surat_hasil_at')) {
-      setParts.push('uploaded_surat_hasil_at = NOW()');
+    if (await tableHasColumn(target.config.table, target.config.uploadedSuratHasilAtColumn)) {
+      setParts.push(`${target.config.uploadedSuratHasilAtColumn} = NOW()`);
     }
 
     values.push(idPengajuan);
     const [result] = await db.execute(
-      `UPDATE ${target.config.table} SET ${setParts.join(', ')} WHERE id_pengajuan = ?`,
+      `UPDATE ${target.config.table} SET ${setParts.join(', ')} WHERE ${target.config.primaryKey} = ?`,
       values
     );
 
@@ -126,7 +126,7 @@ class PengajuanStatusModel {
       success: true,
       affectedRows: result.affectedRows,
       layanan: target.layanan,
-      oldFilePath: target.row.file_surat_hasil || null,
+      oldFilePath: target.row[target.config.fileSuratHasilColumn] || null,
       data: updated?.row || null
     };
   }
@@ -140,21 +140,22 @@ class PengajuanStatusModel {
       return { success: false, code: 'AMBIGUOUS' };
     }
 
-    const nextStatus = normalizeStatus(target.row.status) === 'Selesai' ? 'Diproses' : target.row.status;
+    const currentStatus = target.row[target.config.statusColumn];
+    const nextStatus = normalizeStatus(currentStatus) === 'Selesai' ? 'Diproses' : currentStatus;
     const setParts = [
-      'status = ?',
-      'file_surat_hasil = NULL',
-      'nama_file_surat_hasil = NULL'
+      `${target.config.statusColumn} = ?`,
+      `${target.config.fileSuratHasilColumn} = NULL`,
+      `${target.config.namaFileSuratHasilColumn} = NULL`
     ];
     const values = [nextStatus || 'Diproses'];
 
-    if (await tableHasColumn(target.config.table, 'uploaded_surat_hasil_at')) {
-      setParts.push('uploaded_surat_hasil_at = NULL');
+    if (await tableHasColumn(target.config.table, target.config.uploadedSuratHasilAtColumn)) {
+      setParts.push(`${target.config.uploadedSuratHasilAtColumn} = NULL`);
     }
 
     values.push(idPengajuan);
     const [result] = await db.execute(
-      `UPDATE ${target.config.table} SET ${setParts.join(', ')} WHERE id_pengajuan = ?`,
+      `UPDATE ${target.config.table} SET ${setParts.join(', ')} WHERE ${target.config.primaryKey} = ?`,
       values
     );
 
@@ -163,7 +164,7 @@ class PengajuanStatusModel {
       success: true,
       affectedRows: result.affectedRows,
       layanan: target.layanan,
-      oldFilePath: target.row.file_surat_hasil || null,
+      oldFilePath: target.row[target.config.fileSuratHasilColumn] || null,
       data: updated?.row || null
     };
   }

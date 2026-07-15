@@ -43,6 +43,16 @@ const LAYANAN = {
   }
 };
 
+const DEFAULT_COLUMNS = {
+  primaryKey: 'id_pengajuan',
+  statusColumn: 'status',
+  catatanColumn: 'catatan_petugas',
+  tanggalVerifikasiColumn: 'tanggal_verifikasi',
+  fileSuratHasilColumn: 'file_surat_hasil',
+  namaFileSuratHasilColumn: 'nama_file_surat_hasil',
+  uploadedSuratHasilAtColumn: 'uploaded_surat_hasil_at'
+};
+
 const STATUS_MAP = {
   'menunggu verifikasi': 'Menunggu Verifikasi',
   menunggu_verifikasi: 'Menunggu Verifikasi',
@@ -53,7 +63,8 @@ const STATUS_MAP = {
 };
 
 function getLayananConfig(layanan) {
-  return LAYANAN[String(layanan || '').trim()] || null;
+  const config = LAYANAN[String(layanan || '').trim()];
+  return config ? { ...DEFAULT_COLUMNS, ...config } : null;
 }
 
 function getAllLayanan() {

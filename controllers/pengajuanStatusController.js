@@ -14,7 +14,27 @@ function getIdPengajuan(req) {
 }
 
 function getLayanan(req) {
-  return req.params.layanan || req.body.layanan || req.query.layanan || null;
+  return req.params.layanan || req.layanan || req.body.layanan || req.query.layanan || null;
+}
+
+function validateLayanan(res, layanan) {
+  if (layanan && !getLayananConfig(layanan)) {
+    return R.badRequest(res, 'Layanan tidak valid');
+  }
+
+  return null;
+}
+
+function logEndpointError(label, req, error) {
+  const layanan = getLayanan(req);
+  const config = getLayananConfig(layanan);
+  console.error(label, {
+    service_key: layanan,
+    id_pengajuan: req.params.id,
+    table: config?.table || null,
+    file_diterima: Boolean(req.file),
+    error: error.message
+  });
 }
 
 function removeFileIfSafe(filePath) {
@@ -55,6 +75,11 @@ class PengajuanStatusController {
       }
 
       const layanan = getLayanan(req);
+      const layananError = validateLayanan(res, layanan);
+      if (layananError) {
+        return layananError;
+      }
+
       const result = await PengajuanStatusModel.findById(idPengajuan, layanan);
       if (!result || result.ambiguous) {
         return handleModelProblem(res, result);
@@ -66,9 +91,9 @@ class PengajuanStatusController {
         return R.notFound(res, 'Pengajuan tidak ditemukan');
       }
 
-      return R.ok(res, 'Detail pengajuan berhasil diambil', normalized);
+      return R.ok(res, 'Berhasil mengambil detail pengajuan', normalized);
     } catch (error) {
-      console.error('[pengajuan-detail]', error);
+      logEndpointError('[pengajuan-detail:error]', req, error);
       return R.serverError(res);
     }
   }
@@ -87,6 +112,11 @@ class PengajuanStatusController {
       }
 
       const layanan = getLayanan(req);
+      const layananError = validateLayanan(res, layanan);
+      if (layananError) {
+        return layananError;
+      }
+
       const catatanPetugas = (req.body.catatan_petugas || '').trim();
       const before = await PengajuanStatusModel.findById(idPengajuan, layanan);
       if (!before || before.ambiguous) {
@@ -118,7 +148,7 @@ class PengajuanStatusController {
 
       return R.ok(res, 'Status pengajuan berhasil diperbarui', normalizePengajuanRow(req, result.layanan, result.data));
     } catch (error) {
-      console.error('[update-status]', error);
+      logEndpointError('[update-status:error]', req, error);
       return R.serverError(res);
     }
   }
@@ -135,6 +165,12 @@ class PengajuanStatusController {
       }
 
       const layanan = getLayanan(req);
+      const layananError = validateLayanan(res, layanan);
+      if (layananError) {
+        removeFileIfSafe(`/uploads/surat-hasil/${req.file.filename}`);
+        return layananError;
+      }
+
       const before = await PengajuanStatusModel.findById(idPengajuan, layanan);
       if (!before || before.ambiguous) {
         removeFileIfSafe(`/uploads/surat-hasil/${req.file.filename}`);
@@ -166,7 +202,7 @@ class PengajuanStatusController {
 
       return R.ok(res, 'Surat hasil berhasil diunggah', normalizePengajuanRow(req, result.layanan, result.data));
     } catch (error) {
-      console.error('[upload-surat-hasil]', error);
+      logEndpointError('[upload-surat-hasil:error]', req, error);
       return R.serverError(res);
     }
   }
@@ -179,6 +215,11 @@ class PengajuanStatusController {
       }
 
       const layanan = getLayanan(req);
+      const layananError = validateLayanan(res, layanan);
+      if (layananError) {
+        return layananError;
+      }
+
       const result = await PengajuanStatusModel.deleteSuratHasil(idPengajuan, layanan);
       if (!result.success) {
         return handleModelProblem(res, result);
@@ -190,7 +231,7 @@ class PengajuanStatusController {
 
       return R.ok(res, 'Surat hasil berhasil dihapus', normalizePengajuanRow(req, result.layanan, result.data));
     } catch (error) {
-      console.error('[delete-surat-hasil]', error);
+      logEndpointError('[delete-surat-hasil:error]', req, error);
       return R.serverError(res);
     }
   }

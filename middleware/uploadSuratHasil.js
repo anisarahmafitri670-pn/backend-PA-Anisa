@@ -28,7 +28,7 @@ const storage = multer.diskStorage({
     }
   },
   filename(req, file, cb) {
-    const layanan = toSafeName(req.layanan || 'layanan');
+    const layanan = toSafeName(req.layanan || req.params.layanan || 'layanan');
     const idPengajuan = toSafeName(req.params.id || 'pengajuan');
     const ext = path.extname(file.originalname || '').toLowerCase();
     cb(null, `surat_hasil_${layanan}_${idPengajuan}_${Date.now()}${ext}`);

@@ -43,6 +43,17 @@ const rowSelesai = {
   nama_file_surat_hasil: 'Surat Hasil.pdf'
 };
 
+const layananList = [
+  'rekomendasi_penelitian',
+  'rekomendasi_surat_pindah',
+  'rekomendasi_akta_kelahiran',
+  'rekomendasi_kartu_keluarga',
+  'rekomendasi_surat_kerja',
+  'rekomendasi_surat_tanah',
+  'rekomendasi_surat_ahli_waris',
+  'rekomendasi_surat_yayasan'
+];
+
 describe('Sinkronisasi Status dan Surat Hasil', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -116,6 +127,45 @@ describe('Sinkronisasi Status dan Surat Hasil', () => {
     expect(res.json.mock.calls[0][0].data.nama_file_surat_hasil).toBe('Surat Hasil.pdf');
   });
 
+  test.each(layananList)('upload surat hasil %s memakai field surat_hasil dan status menjadi Selesai', async (layanan) => {
+    PengajuanStatusModel.findById.mockResolvedValue({
+      layanan,
+      row: { ...rowSelesai, status: 'Diproses', file_surat_hasil: null }
+    });
+    PengajuanStatusModel.uploadSuratHasil.mockResolvedValue({
+      success: true,
+      affectedRows: 1,
+      layanan,
+      oldFilePath: null,
+      data: rowSelesai
+    });
+
+    const req = createReq({
+      params: { id: '41' },
+      layanan,
+      body: {},
+      file: {
+        fieldname: 'surat_hasil',
+        filename: `surat_hasil_${layanan}_41.pdf`,
+        originalname: 'Surat Hasil.pdf'
+      }
+    });
+    const res = createResMock();
+
+    await PengajuanStatusController.uploadSuratHasil(req, res);
+
+    expect(req.file.fieldname).toBe('surat_hasil');
+    expect(PengajuanStatusModel.findById).toHaveBeenCalledWith(41, layanan);
+    expect(PengajuanStatusModel.uploadSuratHasil).toHaveBeenCalledWith(
+      41,
+      layanan,
+      `/uploads/surat-hasil/surat_hasil_${layanan}_41.pdf`,
+      'Surat Hasil.pdf'
+    );
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json.mock.calls[0][0].data.status_pengajuan).toBe('Selesai');
+  });
+
   test('detail pengajuan menampilkan file_surat_hasil dan nama_file_surat_hasil', async () => {
     PengajuanStatusModel.findById.mockResolvedValue({
       layanan: 'rekomendasi_surat_kerja',
@@ -161,6 +211,53 @@ describe('Sinkronisasi Status dan Surat Hasil', () => {
     expect(res.json.mock.calls[0][0].data.status_pengajuan).toBe('Diproses');
     expect(res.json.mock.calls[0][0].data.file_surat_hasil).toBeNull();
     expect(res.json.mock.calls[0][0].data.nama_file_surat_hasil).toBeNull();
+  });
+
+  test('layanan tidak dikenal menghasilkan 400', async () => {
+    const req = createReq({
+      params: {
+        id: '41',
+        layanan: 'layanan_tidak_ada'
+      },
+      body: {
+        status_pengajuan: 'Selesai'
+      }
+    });
+    const res = createResMock();
+
+    await PengajuanStatusController.updateStatus(req, res);
+
+    expect(PengajuanStatusModel.findById).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(400);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: 'Layanan tidak valid'
+    });
+  });
+
+  test('pengajuan tidak ditemukan menghasilkan 404', async () => {
+    PengajuanStatusModel.findById.mockResolvedValue(null);
+
+    const req = createReq({
+      params: {
+        id: '999',
+        layanan: 'rekomendasi_akta_kelahiran'
+      },
+      file: {
+        fieldname: 'surat_hasil',
+        filename: 'surat_999.pdf',
+        originalname: 'Surat Hasil.pdf'
+      }
+    });
+    const res = createResMock();
+
+    await PengajuanStatusController.uploadSuratHasil(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: 'Pengajuan tidak ditemukan'
+    });
   });
 
   test('masyarakat tidak dapat melihat pengajuan milik user lain', async () => {
