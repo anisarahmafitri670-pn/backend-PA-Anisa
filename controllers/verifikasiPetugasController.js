@@ -142,13 +142,21 @@ class VerifikasiPetugasController {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
 
-      const result = await VerifikasiPetugasModel.selesai(req.layanan, idPengajuan);
-      if (result.success && result.affectedRows > 0) {
-        return R.ok(res, 'Pengajuan selesai', null);
+      const result = await PengajuanStatusModel.updateStatus(
+        idPengajuan,
+        req.layanan,
+        'Selesai'
+      );
+      if (result.success && result.data) {
+        return R.ok(res, 'Pengajuan selesai', normalizePengajuanRow(req, result.layanan, result.data));
       }
 
-      if (result.success && result.affectedRows === 0) {
+      if (result.code === 'NOT_FOUND') {
         return R.notFound(res, 'Pengajuan tidak ditemukan');
+      }
+
+      if (result.code === 'AMBIGUOUS') {
+        return R.badRequest(res, 'ID pengajuan ditemukan di lebih dari satu layanan, gunakan endpoint layanan yang spesifik');
       }
 
       return R.serverError(res, 'Gagal menyelesaikan pengajuan');
