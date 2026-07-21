@@ -369,11 +369,17 @@ describe('Iterasi 2 - Autentikasi & Otorisasi', () => {
       await UserLoginHistoryController.logout(req, res);
 
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith({
-        success: true,
-        message: 'Logout berhasil',
-        data: null
-      });
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({
+          success: true,
+          message: 'Logout berhasil',
+          data: expect.objectContaining({
+            id_user: 21,
+            aktivitas: 'logout',
+            role: 'masyarakat'
+          })
+        })
+      );
     });
   });
 
