@@ -37,3 +37,4 @@ router.delete(
 registerPetugasRoutes(router, 'rekomendasi_penelitian');
 
 module.exports = router;
+

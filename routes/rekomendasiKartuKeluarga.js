@@ -37,3 +37,4 @@ router.delete(
 registerPetugasRoutes(router, 'rekomendasi_kartu_keluarga');
 
 module.exports = router;
+

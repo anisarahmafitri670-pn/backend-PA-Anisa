@@ -25,7 +25,6 @@ function normalizeReqFiles(reqFiles) {
   }
   return { type: 'unknown', filesArray: [], filesMap: {} };
 }
-
 class DokumenRekomendasiPenelitianController {
   static async uploadDokumen(req, res) {
     try {
@@ -37,7 +36,6 @@ class DokumenRekomendasiPenelitianController {
       if (Number.isNaN(idPengajuan)) {
         return R.badRequest(res, 'ID pengajuan tidak valid');
       }
-
       const uploadedDocs = [];
 
       // New mode: 3 files at once (field name becomes jenis_dokumen)

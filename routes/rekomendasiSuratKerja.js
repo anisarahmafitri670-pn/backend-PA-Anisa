@@ -37,3 +37,4 @@ router.delete(
 registerPetugasRoutes(router, 'rekomendasi_surat_kerja');
 
 module.exports = router;
+

@@ -37,3 +37,5 @@ router.delete(
 registerPetugasRoutes(router, 'rekomendasi_surat_pindah');
 
 module.exports = router;
+
+

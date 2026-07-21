@@ -1,52 +1,11 @@
-jest.mock('../models/rekomendasiPenelitianModel', () => ({
-  getAllRekomendasi: jest.fn()
+jest.mock('../models/kepalaCamatLaporanModel', () => ({
+  getAllPengajuan: jest.fn(),
+  getDetailByLayananAndId: jest.fn()
 }));
 
-jest.mock('../models/rekomendasiSuratPindahModel', () => ({
-  getAllPengajuan: jest.fn()
-}));
-
-jest.mock('../models/rekomendasiAktaKelahiranModel', () => ({
-  getAllPengajuan: jest.fn()
-}));
-
-jest.mock('../models/rekomendasiKartuKeluargaModel', () => ({
-  getAllPengajuan: jest.fn()
-}));
-
-jest.mock('../models/rekomendasiSuratKerjaModel', () => ({
-  getAllPengajuan: jest.fn()
-}));
-
-jest.mock('../models/rekomendasiSuratTanahModel', () => ({
-  getAllPengajuan: jest.fn()
-}));
-
-jest.mock('../models/rekomendasiSuratAhliWarisModel', () => ({
-  getAllPengajuan: jest.fn()
-}));
-
-jest.mock('../models/rekomendasiSuratYayasanModel', () => ({
-  getAllPengajuan: jest.fn()
-}));
-
-const RekomendasiPenelitianController = require('../controllers/rekomendasiPenelitianController');
-const RekomendasiSuratPindahController = require('../controllers/rekomendasiSuratPindahController');
-const RekomendasiAktaKelahiranController = require('../controllers/rekomendasiAktaKelahiranController');
-const RekomendasiKartuKeluargaController = require('../controllers/rekomendasiKartuKeluargaController');
-const RekomendasiSuratKerjaController = require('../controllers/rekomendasiSuratKerjaController');
-const RekomendasiSuratTanahController = require('../controllers/rekomendasiSuratTanahController');
-const RekomendasiSuratAhliWarisController = require('../controllers/rekomendasiSuratAhliWarisController');
-const RekomendasiSuratYayasanController = require('../controllers/rekomendasiSuratYayasanController');
-
-const RekomendasiPenelitianModel = require('../models/rekomendasiPenelitianModel');
-const RekomendasiSuratPindahModel = require('../models/rekomendasiSuratPindahModel');
-const RekomendasiAktaKelahiranModel = require('../models/rekomendasiAktaKelahiranModel');
-const RekomendasiKartuKeluargaModel = require('../models/rekomendasiKartuKeluargaModel');
-const RekomendasiSuratKerjaModel = require('../models/rekomendasiSuratKerjaModel');
-const RekomendasiSuratTanahModel = require('../models/rekomendasiSuratTanahModel');
-const RekomendasiSuratAhliWarisModel = require('../models/rekomendasiSuratAhliWarisModel');
-const RekomendasiSuratYayasanModel = require('../models/rekomendasiSuratYayasanModel');
+const KepalaCamatController = require('../controllers/kepalaCamatController');
+const KepalaCamatLaporanModel = require('../models/kepalaCamatLaporanModel');
+const authorizeRoles = require('../middleware/role');
 
 function createResMock() {
   const res = {};
@@ -55,236 +14,262 @@ function createResMock() {
   return res;
 }
 
-function createReq(userId = 17) {
+function createReq(query = {}) {
   return {
     user: {
-      id_user: userId,
-      role: 'masyarakat'
+      id_user: 22,
+      role: 'kepala camat'
     },
     query: {
       page: '1',
-      limit: '10'
+      limit: '10',
+      ...query
     }
   };
 }
 
-const pagination = {
-  current_page: 1,
-  per_page: 10,
-  total_data: 1,
-  total_page: 1,
-  from: 1,
-  to: 1,
-  has_next: false,
-  has_prev: false
-};
+function createDetailReq(id = 1) {
+  return {
+    user: {
+      id_user: 22,
+      role: 'kepala camat'
+    },
+    params: {
+      layanan: 'rekomendasi_penelitian',
+      id: String(id)
+    }
+  };
+}
 
-const layananList = [
-  {
-    endpoint: 'GET /api/rekomendasi_penelitian',
-    jenisLayanan: 'Rekomendasi Penelitian',
-    controller: RekomendasiPenelitianController,
-    controllerMethod: 'getAllRekomendasi',
-    model: RekomendasiPenelitianModel,
-    modelMethod: 'getAllRekomendasi',
-    prefix: 'RP'
-  },
-  {
-    endpoint: 'GET /api/rekomendasi_surat_pindah',
-    jenisLayanan: 'Rekomendasi Surat Pindah',
-    controller: RekomendasiSuratPindahController,
-    controllerMethod: 'getAllPengajuan',
-    model: RekomendasiSuratPindahModel,
-    modelMethod: 'getAllPengajuan',
-    prefix: 'SP'
-  },
-  {
-    endpoint: 'GET /api/rekomendasi_akta_kelahiran',
-    jenisLayanan: 'Rekomendasi Akta Kelahiran',
-    controller: RekomendasiAktaKelahiranController,
-    controllerMethod: 'getAllPengajuan',
-    model: RekomendasiAktaKelahiranModel,
-    modelMethod: 'getAllPengajuan',
-    prefix: 'AK'
-  },
-  {
-    endpoint: 'GET /api/rekomendasi_kartu_keluarga',
-    jenisLayanan: 'Rekomendasi Kartu Keluarga',
-    controller: RekomendasiKartuKeluargaController,
-    controllerMethod: 'getAllPengajuan',
-    model: RekomendasiKartuKeluargaModel,
-    modelMethod: 'getAllPengajuan',
-    prefix: 'KK'
-  },
-  {
-    endpoint: 'GET /api/rekomendasi_surat_kerja',
-    jenisLayanan: 'Rekomendasi Kerja',
-    controller: RekomendasiSuratKerjaController,
-    controllerMethod: 'getAllPengajuan',
-    model: RekomendasiSuratKerjaModel,
-    modelMethod: 'getAllPengajuan',
-    prefix: 'RK'
-  },
-  {
-    endpoint: 'GET /api/rekomendasi_surat_tanah',
-    jenisLayanan: 'Rekomendasi Surat Tanah',
-    controller: RekomendasiSuratTanahController,
-    controllerMethod: 'getAllPengajuan',
-    model: RekomendasiSuratTanahModel,
-    modelMethod: 'getAllPengajuan',
-    prefix: 'ST'
-  },
-  {
-    endpoint: 'GET /api/rekomendasi_surat_ahli_waris',
-    jenisLayanan: 'Rekomendasi Surat Ahli Waris',
-    controller: RekomendasiSuratAhliWarisController,
-    controllerMethod: 'getAllPengajuan',
-    model: RekomendasiSuratAhliWarisModel,
-    modelMethod: 'getAllPengajuan',
-    prefix: 'AW'
-  },
-  {
-    endpoint: 'GET /api/rekomendasi_surat_yayasan',
-    jenisLayanan: 'Rekomendasi Surat Yayasan',
-    controller: RekomendasiSuratYayasanController,
-    controllerMethod: 'getAllPengajuan',
-    model: RekomendasiSuratYayasanModel,
-    modelMethod: 'getAllPengajuan',
-    prefix: 'SY'
-  }
-];
+function createPenelitianRow({
+  id_pengajuan = 1,
+  nama_peneliti = 'Widya Putri',
+  status = 'Menunggu Verifikasi',
+  catatan_petugas = '',
+  created_at = '2026-07-01T08:00:00.000Z',
+  updated_at = '2026-07-02T09:00:00.000Z',
+  file_surat_hasil = null
+} = {}) {
+  return {
+    layanan: 'rekomendasi_penelitian',
+    config: {
+      table: 'rekomendasi_penelitian',
+      dokumenTable: 'dokumen_rekomendasi_penelitian',
+      label: 'Rekomendasi Penelitian',
+      code: 'RP',
+      namaField: 'nama_peneliti'
+    },
+    row: {
+      id_pengajuan,
+      id_user: 17,
+      nama_peneliti,
+      nim: '123456',
+      universitas: 'Universitas Contoh',
+      status,
+      catatan_petugas,
+      created_at,
+      updated_at,
+      file_surat_hasil,
+      nama_file_surat_hasil: file_surat_hasil ? 'surat-hasil.pdf' : null
+    }
+  };
+}
 
-describe('Iterasi 6 - History Pengajuan Masyarakat', () => {
+describe('Iterasi 6 - History Pengajuan Rekomendasi Penelitian Kepala Camat', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
 
-  test.each(layananList)('$endpoint berhasil menampilkan riwayat pengajuan milik user', async (layanan) => {
-    const req = createReq(17);
-    const res = createResMock();
-    const historyItem = {
-      id_pengajuan: 21,
-      id_user: 17,
-      jenis_layanan: layanan.jenisLayanan,
-      status: 'Menunggu Verifikasi',
-      tanggal_pengajuan: '2026-07-07 09:00:00',
-      updated_at: '2026-07-07 09:00:00'
-    };
-
-    layanan.model[layanan.modelMethod].mockResolvedValue({
-      success: true,
-      data: [historyItem],
-      pagination
-    });
-
-    await layanan.controller[layanan.controllerMethod](req, res);
-
-    expect(layanan.model[layanan.modelMethod]).toHaveBeenCalledWith(17, req.query);
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        success: true,
-        data: [
-          expect.objectContaining({
-            id_pengajuan: 21,
-            id_user: 17,
-            nomor_pengajuan: `${layanan.prefix}-021`,
-            jenis_layanan: layanan.jenisLayanan,
-            status: 'Menunggu Verifikasi',
-            tanggal_pengajuan: '2026-07-07 09:00:00'
-          })
-        ],
-        pagination
-      })
-    );
-  });
-
-  test.each(layananList)('$endpoint tetap berhasil dengan data kosong jika user belum memiliki pengajuan', async (layanan) => {
-    const req = createReq(17);
-    const res = createResMock();
-    const emptyPagination = {
-      current_page: 1,
-      per_page: 10,
-      total_data: 0,
-      total_page: 0,
-      from: 0,
-      to: 0,
-      has_next: false,
-      has_prev: false
-    };
-
-    layanan.model[layanan.modelMethod].mockResolvedValue({
-      success: true,
-      data: [],
-      pagination: emptyPagination
-    });
-
-    await layanan.controller[layanan.controllerMethod](req, res);
-
-    expect(layanan.model[layanan.modelMethod]).toHaveBeenCalledWith(17, req.query);
-    expect(res.status).toHaveBeenCalledWith(200);
-    expect(res.json).toHaveBeenCalledWith(
-      expect.objectContaining({
-        success: true,
-        data: [],
-        pagination: emptyPagination
-      })
-    );
-  });
-
-  test.each(layananList)('$endpoint tidak menampilkan riwayat milik user lain', async (layanan) => {
-    const req = createReq(17);
+  test('kepala camat berhasil melihat history pengajuan rekomendasi penelitian', async () => {
+    const req = createReq({ layanan: 'rekomendasi_penelitian' });
     const res = createResMock();
 
-    layanan.model[layanan.modelMethod].mockResolvedValue({
+    KepalaCamatLaporanModel.getAllPengajuan.mockResolvedValue({
       success: true,
       data: [
-        {
-          id_pengajuan: 8,
-          id_user: 17,
-          jenis_layanan: layanan.jenisLayanan,
+        createPenelitianRow({ id_pengajuan: 3, status: 'Diproses' }),
+        createPenelitianRow({ id_pengajuan: 2, status: 'Menunggu Verifikasi' })
+      ]
+    });
+
+    await KepalaCamatController.laporan(req, res);
+
+    expect(KepalaCamatLaporanModel.getAllPengajuan).toHaveBeenCalledTimes(1);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: true,
+        data: expect.objectContaining({
+          total_pengajuan: 2,
+          daftar_pengajuan: expect.arrayContaining([
+            expect.objectContaining({
+              id_pengajuan: 3,
+              nomor_pengajuan: 'RP-003',
+              nama_pemohon: 'Widya Putri',
+              jenis_layanan: 'Rekomendasi Penelitian',
+              layanan: 'rekomendasi_penelitian',
+              status: 'Diproses'
+            })
+          ])
+        })
+      })
+    );
+  });
+
+  test('history menampilkan status terbaru, tanggal pengajuan, dan catatan petugas', async () => {
+    const req = createReq({
+      layanan: 'rekomendasi_penelitian',
+      status: 'diproses'
+    });
+    const res = createResMock();
+
+    KepalaCamatLaporanModel.getAllPengajuan.mockResolvedValue({
+      success: true,
+      data: [
+        createPenelitianRow({
+          id_pengajuan: 4,
           status: 'Diproses',
-          tanggal_pengajuan: '2026-07-06 08:00:00'
-        }
-      ],
-      pagination
-    });
-
-    await layanan.controller[layanan.controllerMethod](req, res);
-
-    expect(layanan.model[layanan.modelMethod]).toHaveBeenCalledWith(17, req.query);
-    const payload = res.json.mock.calls[0][0];
-    expect(payload.data.every((item) => item.id_user === 17)).toBe(true);
-  });
-
-  test.each(layananList)('$endpoint menampilkan status terbaru sesuai perubahan terakhir', async (layanan) => {
-    const req = createReq(17);
-    const res = createResMock();
-
-    layanan.model[layanan.modelMethod].mockResolvedValue({
-      success: true,
-      data: [
-        {
-          id_pengajuan: 31,
-          id_user: 17,
-          jenis_layanan: layanan.jenisLayanan,
+          catatan_petugas: 'Dokumen sedang diperiksa',
+          created_at: '2026-07-03T10:00:00.000Z',
+          updated_at: '2026-07-04T11:00:00.000Z'
+        }),
+        createPenelitianRow({
+          id_pengajuan: 5,
           status: 'Selesai',
-          tanggal_pengajuan: '2026-07-05 10:00:00',
-          updated_at: '2026-07-07 14:30:00'
-        }
-      ],
-      pagination
+          catatan_petugas: 'Surat sudah selesai'
+        })
+      ]
     });
 
-    await layanan.controller[layanan.controllerMethod](req, res);
+    await KepalaCamatController.laporan(req, res);
 
     const payload = res.json.mock.calls[0][0];
-    expect(payload.data[0]).toEqual(
+    expect(payload.data.daftar_pengajuan).toHaveLength(1);
+    expect(payload.data.daftar_pengajuan[0]).toEqual(
       expect.objectContaining({
-        id_pengajuan: 31,
-        status: 'Selesai',
-        updated_at: '2026-07-07 14:30:00'
+        id_pengajuan: 4,
+        status: 'Diproses',
+        tanggal_pengajuan: '2026-07-03',
+        catatan_petugas: 'Dokumen sedang diperiksa'
       })
     );
+  });
+
+  test('jika belum ada history rekomendasi penelitian, response tetap berhasil dengan data kosong', async () => {
+    const req = createReq({ layanan: 'rekomendasi_penelitian' });
+    const res = createResMock();
+
+    KepalaCamatLaporanModel.getAllPengajuan.mockResolvedValue({
+      success: true,
+      data: []
+    });
+
+    await KepalaCamatController.laporan(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: true,
+        data: expect.objectContaining({
+          total_pengajuan: 0,
+          daftar_pengajuan: []
+        }),
+        pagination: expect.objectContaining({
+          total_data: 0,
+          total_page: 0
+        })
+      })
+    );
+  });
+
+  test('kepala camat berhasil melihat detail history pengajuan rekomendasi penelitian', async () => {
+    const req = createDetailReq(7);
+    const res = createResMock();
+
+    KepalaCamatLaporanModel.getDetailByLayananAndId.mockResolvedValue({
+      success: true,
+      data: {
+        ...createPenelitianRow({
+          id_pengajuan: 7,
+          status: 'Selesai',
+          catatan_petugas: 'Surat hasil telah diterbitkan',
+          file_surat_hasil: '/uploads/surat-hasil/hasil-penelitian.pdf'
+        }),
+        dokumen: [
+          {
+            id_dokumen: 1,
+            jenis_dokumen: 'ktp_mahasiswa',
+            file_path: '/uploads/penelitian/7/ktp.pdf',
+            original_name: 'ktp.pdf',
+            mime_type: 'application/pdf',
+            file_size: 1200,
+            uploaded_at: '2026-07-01T08:30:00.000Z'
+          }
+        ]
+      }
+    });
+
+    await KepalaCamatController.detailLaporan(req, res);
+
+    expect(KepalaCamatLaporanModel.getDetailByLayananAndId).toHaveBeenCalledWith('rekomendasi_penelitian', 7);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: true,
+        data: expect.objectContaining({
+          id_pengajuan: 7,
+          nomor_pengajuan: 'RP-007',
+          jenis_layanan: 'Rekomendasi Penelitian',
+          status: 'Selesai',
+          catatan_petugas: 'Surat hasil telah diterbitkan',
+          file_surat_hasil: '/uploads/surat-hasil/hasil-penelitian.pdf',
+          daftar_dokumen: [
+            expect.objectContaining({
+              jenis_dokumen: 'ktp_mahasiswa'
+            })
+          ]
+        })
+      })
+    );
+  });
+
+  test('detail history menghasilkan 404 jika pengajuan rekomendasi penelitian tidak ditemukan', async () => {
+    const req = createDetailReq(99);
+    const res = createResMock();
+
+    KepalaCamatLaporanModel.getDetailByLayananAndId.mockResolvedValue({
+      success: true,
+      data: null
+    });
+
+    await KepalaCamatController.detailLaporan(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.json).toHaveBeenCalledWith(
+      expect.objectContaining({
+        success: false,
+        message: 'Data pengajuan tidak ditemukan'
+      })
+    );
+  });
+
+  test('role selain kepala camat tidak boleh mengakses history pengajuan', () => {
+    const req = {
+      user: {
+        id_user: 17,
+        role: 'masyarakat'
+      }
+    };
+    const res = createResMock();
+    const next = jest.fn();
+
+    authorizeRoles('kepala camat')(req, res, next);
+
+    expect(next).not.toHaveBeenCalled();
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.json).toHaveBeenCalledWith({
+      success: false,
+      message: 'Forbidden'
+    });
   });
 });

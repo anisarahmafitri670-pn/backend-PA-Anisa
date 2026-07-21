@@ -16,3 +16,4 @@ router.get('/api/kepala-camat/laporan', auth, authorizeRoles('kepala camat'), Ke
 router.get('/api/kepala-camat/laporan/:layanan/:id', auth, authorizeRoles('kepala camat'), KepalaCamatController.detailLaporan);
 
 module.exports = router;
+
