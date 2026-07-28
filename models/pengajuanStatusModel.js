@@ -1,29 +1,6 @@
 const db = require('../config/db');
 const { getAllLayanan, getLayananConfig, normalizeStatus } = require('../utils/pengajuanLayanan');
 
-const columnCache = new Map();
-
-async function tableHasColumn(tableName, columnName) {
-  const cacheKey = `${tableName}.${columnName}`;
-  if (columnCache.has(cacheKey)) {
-    return columnCache.get(cacheKey);
-  }
-
-  const [rows] = await db.execute(
-    `
-      SELECT COUNT(*) AS total
-      FROM INFORMATION_SCHEMA.COLUMNS
-      WHERE TABLE_SCHEMA = DATABASE()
-        AND TABLE_NAME = ?
-        AND COLUMN_NAME = ?
-    `,
-    [tableName, columnName]
-  );
-  const exists = Number(rows[0]?.total || 0) > 0;
-  columnCache.set(cacheKey, exists);
-  return exists;
-}
-
 async function findInTable(layanan, idPengajuan) {
   const config = getLayananConfig(layanan);
   if (!config) {
@@ -120,9 +97,7 @@ class PengajuanStatusModel {
     ];
     const values = ['Selesai', filePath, originalName];
 
-    if (await tableHasColumn(target.config.table, target.config.uploadedSuratHasilAtColumn)) {
-      setParts.push(`${target.config.uploadedSuratHasilAtColumn} = NOW()`);
-    }
+    setParts.push(`${target.config.uploadedSuratHasilAtColumn} = NOW()`);
 
     values.push(idPengajuan);
     const [result] = await db.execute(
@@ -158,9 +133,7 @@ class PengajuanStatusModel {
     ];
     const values = [nextStatus || 'Diproses'];
 
-    if (await tableHasColumn(target.config.table, target.config.uploadedSuratHasilAtColumn)) {
-      setParts.push(`${target.config.uploadedSuratHasilAtColumn} = NULL`);
-    }
+    setParts.push(`${target.config.uploadedSuratHasilAtColumn} = NULL`);
 
     values.push(idPengajuan);
     const [result] = await db.execute(

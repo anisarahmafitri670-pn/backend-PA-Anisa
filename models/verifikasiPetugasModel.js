@@ -15,21 +15,6 @@ function getTableName(layanan) {
   return TABLES[layanan] || null;
 }
 
-async function tableHasColumn(tableName, columnName) {
-  const [rows] = await db.execute(
-    `
-      SELECT COUNT(*) AS total
-      FROM INFORMATION_SCHEMA.COLUMNS
-      WHERE TABLE_SCHEMA = DATABASE()
-        AND TABLE_NAME = ?
-        AND COLUMN_NAME = ?
-    `,
-    [tableName, columnName]
-  );
-
-  return Number(rows[0]?.total || 0) > 0;
-}
-
 class VerifikasiPetugasModel {
   static async findById(layanan, idPengajuan) {
     try {
@@ -115,11 +100,9 @@ class VerifikasiPetugasModel {
         return { success: false, error: 'Layanan tidak valid' };
       }
 
-      const hasUploadedAt = await tableHasColumn(tableName, 'uploaded_surat_hasil_at');
-      const uploadedAtSql = hasUploadedAt ? ', uploaded_surat_hasil_at = NOW()' : '';
       const query = `
         UPDATE ${tableName}
-        SET status = ?, file_surat_hasil = ?, nama_file_surat_hasil = ?${uploadedAtSql}
+        SET status = ?, file_surat_hasil = ?, nama_file_surat_hasil = ?, uploaded_surat_hasil_at = NOW()
         WHERE id_pengajuan = ?
       `;
       const [result] = await db.execute(query, ['Selesai', filePath, originalName, idPengajuan]);
