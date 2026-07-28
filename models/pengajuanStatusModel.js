@@ -9,8 +9,17 @@ async function tableHasColumn(tableName, columnName) {
     return columnCache.get(cacheKey);
   }
 
-  const [rows] = await db.execute(`SHOW COLUMNS FROM ${tableName} LIKE ?`, [columnName]);
-  const exists = rows.length > 0;
+  const [rows] = await db.execute(
+    `
+      SELECT COUNT(*) AS total
+      FROM INFORMATION_SCHEMA.COLUMNS
+      WHERE TABLE_SCHEMA = DATABASE()
+        AND TABLE_NAME = ?
+        AND COLUMN_NAME = ?
+    `,
+    [tableName, columnName]
+  );
+  const exists = Number(rows[0]?.total || 0) > 0;
   columnCache.set(cacheKey, exists);
   return exists;
 }
