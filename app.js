@@ -7,22 +7,43 @@ const swaggerSpec = require('./config/swagger');
 const app = express();
 
 // Middleware
+function getAllowedOrigins() {
+  const configuredOrigins = (process.env.CORS_ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+
+  let swaggerOrigin = null;
+  try {
+    swaggerOrigin = swaggerSpec.servers?.[0]?.url
+      ? new URL(swaggerSpec.servers[0].url).origin
+      : null;
+  } catch (error) {
+    // An invalid Swagger server URL must not broaden the CORS policy.
+    swaggerOrigin = null;
+  }
+  const defaultOrigins = [
+    process.env.FRONTEND_URL,
+    'http://localhost:5173',
+    'http://127.0.0.1:5173',
+    swaggerOrigin
+  ];
+
+  return new Set([...defaultOrigins, ...configuredOrigins].filter(Boolean));
+}
+
 const corsOptions = {
   origin(origin, callback) {
-    const allowList = new Set([
-      process.env.FRONTEND_URL || 'http://localhost:5173',
-      'http://localhost:5173',
-      'http://127.0.0.1:5173'
-    ]);
+    const allowList = getAllowedOrigins();
 
     // allow non-browser requests (e.g., Postman) with no origin
     if (!origin) return callback(null, true);
     if (allowList.has(origin)) return callback(null, true);
-    return callback(new Error('CORS origin tidak diizinkan: ' + origin));
+    return callback(new Error('CORS origin tidak diizinkan'));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  allowedHeaders: ['Content-Type', 'Accept', 'Authorization']
 };
 
 app.use(cors(corsOptions));
@@ -86,7 +107,15 @@ app.get('/', (req, res) => {
 
 // Error handling middleware
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  // Diagnostic metadata only; do not log request bodies, credentials, or tokens.
+  console.error('[request-error]', {
+    method: req.method,
+    path: req.originalUrl,
+    origin: req.get('origin') || null,
+    contentType: req.get('content-type') || null,
+    accept: req.get('accept') || null,
+    message: err.message
+  });
   res.status(500).json({
     success: false,
     message: 'Terjadi kesalahan pada server',
