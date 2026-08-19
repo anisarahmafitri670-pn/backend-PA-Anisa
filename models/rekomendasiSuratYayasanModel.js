@@ -23,13 +23,14 @@ class Database {
       ];
 
       const [result] = await db.execute(query, values);
-_
+
       return {
         success: true,
         id: result.insertId,
         message: 'Pengajuan rekomendasi surat yayasan berhasil disimpan'
       };
     } catch (error) {
+      console.error('[YAYASAN] savePengajuan error:', error);
       return {
         success: false,
         error: error.message
