@@ -32,6 +32,35 @@ function getAllowedOrigins() {
   return new Set([...defaultOrigins, ...configuredOrigins].filter(Boolean));
 }
 
+function swaggerBasicAuth(req, res, next) {
+  const unauthorized = () => {
+    res.setHeader('WWW-Authenticate', 'Basic realm="Swagger Documentation"');
+    return res.status(401).send('Authentication required');
+  };
+
+  const authorization = req.get('authorization') || '';
+  if (!authorization.startsWith('Basic ')) return unauthorized();
+
+  try {
+    const decoded = Buffer.from(authorization.slice(6), 'base64').toString('utf8');
+    const separator = decoded.indexOf(':');
+    if (separator < 0) return unauthorized();
+
+    const username = decoded.slice(0, separator);
+    const password = decoded.slice(separator + 1);
+    if (
+      username !== process.env.SWAGGER_USERNAME ||
+      password !== process.env.SWAGGER_PASSWORD
+    ) {
+      return unauthorized();
+    }
+
+    return next();
+  } catch (error) {
+    return unauthorized();
+  }
+}
+
 const corsOptions = {
   origin(origin, callback) {
     const allowList = getAllowedOrigins();
@@ -57,6 +86,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 // Dokumentasi API Register, Login, dan Pengajuan Form Layanan
 app.use(
   '/api-docs',
+  swaggerBasicAuth,
   swaggerUi.serve,
   swaggerUi.setup(swaggerSpec, {
     explorer: false,
